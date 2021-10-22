@@ -39,8 +39,9 @@
                     <img class="shop-item-image" src="Images/Shirt.png">
                     <div class="shop-item-details">
                         <span class="shop-item-price">$19.99</span>
-                        <button class="btn btn-primary shop-item-button" type="button">ADD TO CART</button>
+                        <button onclick="AddToCart()" class="btn btn-primary shop-item-button" type="button" >ADD TO CART
 			    <script>
+				    function AddToCart(){
 				    ttq.track('AddToCart', {
 							    content_id: 'tshirt',
 							    content_type: 'product',
@@ -49,8 +50,9 @@
 							    price: 19.99,
 							    value: 19.99,
 							    currency: 'USD',
-							})
+							})}
 			    </script>
+				</button>
                     </div>
                 </div>
                 <div class="shop-item">
@@ -87,7 +89,11 @@
                 <strong class="cart-total-title">Total</strong>
                 <span class="cart-total-price">$0</span>
             </div>
-            <button class="btn btn-primary btn-purchase" type="button">PURCHASE</button>
+            <button class="btn btn-primary btn-purchase" type="button">PURCHASE
+		    <script>
+			    ttq.track('CompletePayment')
+		    </script>
+		</button>
         </section>
         <footer class="main-footer">
             <div class="container main-footer-container">
