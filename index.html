@@ -16,7 +16,9 @@
         <script src="store.js" async></script>
     </head>
     <body>
+	    <script>
 	    ttq.track('ViewContent')
+	    </script>
         <header class="main-header">
             <nav class="main-nav nav">
                 <ul>
@@ -38,6 +40,17 @@
                     <div class="shop-item-details">
                         <span class="shop-item-price">$19.99</span>
                         <button class="btn btn-primary shop-item-button" type="button">ADD TO CART</button>
+			    <script>
+				    ttq.track('AddToCart', {
+							    content_id: 'tshirt',
+							    content_type: 'product',
+							    content_name: 'tshirt',
+							    quantity: 1,
+							    price: 19.99,
+							    value: 19.99,
+							    currency: 'USD',
+							})
+			    </script>
                     </div>
                 </div>
                 <div class="shop-item">
@@ -46,6 +59,17 @@
                     <div class="shop-item-details">
                         <span class="shop-item-price">$6.99</span>
                         <button class="btn btn-primary shop-item-button" type="button">ADD TO CART</button>
+			    <script>
+				    ttq.track('AddToCart', {
+							    content_id: 'art',
+							    content_type: 'product',
+							    content_name: 'art',
+							    quantity: 1,
+							    price: 6.99,
+							    value: 6.99,
+							    currency: 'USD',
+							})
+			    </script>
                     </div>
                 </div>
             </div>
