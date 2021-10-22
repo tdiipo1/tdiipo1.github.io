@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css?family=Raleway:300,400,700');
-@import url("https://fonts.googleapis.com/css?family=Metal+Mania");
+@import url("https://fonts.googleapis.com/css?family=Open+Sans");
 
 @font-face {
     font-family: "Booter - Zero Zero";
@@ -82,7 +82,7 @@ html, body {
     padding: 0 1.5em;
 }
 .section-header {
-    font-family: "Metal Mania";
+    font-family: "Open Sans";
     font-weight: normal;
     color: #333;
     text-align: center;
@@ -98,7 +98,7 @@ html, body {
 }
 
 .main-footer {
-    background-color: #56CCF2;
+    background-color: #800080;
     color: white;
     padding: .25em 0;
 }
@@ -159,7 +159,7 @@ html, body {
 
 .btn-primary {
     color: white;
-    background-color: #56CCF2;
+    background-color: #800080;
     border: none;
     border-radius: .3em;
     font-weight: bold;
@@ -298,7 +298,7 @@ html, body {
     height: 34px;
     width: 50px;
     border-radius: 5px;
-    border: 1px solid #56CCF2;
+    border: 1px solid #800080;
     background-color: #eee;
     color: #333;
     padding: 0;
