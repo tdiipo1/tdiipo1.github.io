@@ -90,9 +90,10 @@
                 <strong class="cart-total-title">Total</strong>
                 <span class="cart-total-price">$0</span>
             </div>
-            <button class="btn btn-primary btn-purchase" type="button">PURCHASE
+            <button onclick="CompletePayment()" class="btn btn-primary btn-purchase" type="button">PURCHASE
 		    <script>
-			    ttq.track('CompletePayment')
+			    function CompletePayment(){
+			    ttq.track('CompletePayment')}
 		    </script>
 		</button>
         </section>
