@@ -14,7 +14,7 @@
 		}(window, document, 'ttq');
 	    </script>
         <title>Diipo's Photo Store | Store</title>
-<!--->>>>>>> 71232994a1e996b7f9f1764af56160f15a18c465--->
+<!--- 71232994a1e996b7f9f1764af56160f15a18c465--->
         <meta name="description" content="This is the description">
         <link rel="stylesheet" href="styles.css" />
         <script src="store.js" async></script>
@@ -58,10 +58,24 @@
                     	onBlur="if(this.value == '') { this.value = 'Your Email...';}"
                     	value="Your Email..." required="">
                       </fieldset>
+					   <fieldset>
+                        <input name="phonenumber" type="tel" class="form-control" id="phonenumber" 
+                        onfocus="if(this.value == '+12223334444') { this.value = ''; }" 
+                    	onBlur="if(this.value == '') { this.value = '+12223334444';}"
+                    	value="+12223334444" required="">
+                      </fieldset>
                     </div>
                     <div class="col-md-5">
                       <fieldset>
-                        <button type="submit" id="form-submit" class="button">Subscribe Now!</button>
+                        <button onclick="subscribeevent()" type="submit" id="form-submit" class="button">Subscribe Now!</button>
+						<script>
+						ttq.identify({
+						email: email,
+						phone_number = phonenumber,
+						})
+						function subscribeevent(){
+						ttq.track('CompletePayment')}
+						</script>
                       </fieldset>
                     </div>
                   </div>
