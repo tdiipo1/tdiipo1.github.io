@@ -65,13 +65,13 @@
                         Email Address: <input name="email" type="text" class="form-control" id="email" 
                         onfocus="if(this.value == 'Your Email...') { this.value = ''; }" 
                     	onBlur="if(this.value == '') { this.value = 'Your Email...';}"
-                    	value="Your Email..." required="" id="a">
+                    	value="Your Email..." required="">
                       </fieldset>
 					   <fieldset>
                         Phone #: <input name="phonenumber" type="tel" class="form-control" id="phonenumber" 
                         onfocus="if(this.value == '+12223334444') { this.value = ''; }" 
                     	onBlur="if(this.value == '') { this.value = '+12223334444';}"
-                    	value="+12223334444" required="" id="b">
+                    	value="+12223334444" required="">
                       </fieldset>
                     </div>
 <!--					<p>email: document.getElementById('a').value
@@ -85,6 +85,12 @@
 <!--						phone_number: document.getElementById('b').value'1111111111'
 <!--						email: 'tdiipo@yahoo.com',
 <!--						phone_number: '+12604673421'-->
+					  <script>
+						function subscribeevent2(){					  
+						ttq.identify({
+						email: 'tdiipo@yahoo.com',
+						phone_number: '+12604673421',
+						})}</script>
 						<script>
 						function subscribeevent(){
 						ttq.track('Subscribe')}
@@ -96,12 +102,6 @@
 						phone_number: '+12604673421',
 						})}</script>
                       </fieldset>
-					  <script>
-						function subscribeevent2(){					  
-						ttq.identify({
-						email: 'tdiipo@yahoo.com',
-						phone_number: '+12604673421',
-						})}</script>
                     </div>
                   </div>
                 </form>
