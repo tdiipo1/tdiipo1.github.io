@@ -79,22 +79,22 @@
                     <div class="col-md-5">
                       <fieldset>
                         <button onclick="subscribeevent(); identify()" type="submit" id="form-submit" class="button">Subscribe Now!</button>
-						<script>
 <!--						email: email,,-->
 <!--						phone_number = phonenumber,-->
 <!--						email: document.getElementById('a').value'test@test.com',
 <!--						phone_number: document.getElementById('b').value'1111111111'
 <!--						email: 'tdiipo@yahoo.com',
-<!--						phone_number: '+12604673421'
+<!--						phone_number: '+12604673421'-->
+						<script>
+						function subscribeevent(){
+						ttq.track('Subscribe')}
+						</script>
+						<script>
 						function identify(){
 						ttq.identify({
 						email: 'tdiipo@yahoo.com',
 						phone_number: '+12604673421',
 						})}</script>
-						<script>
-						function subscribeevent(){
-						ttq.track('Subscribe')}
-						</script>
                       </fieldset>
                     </div>
                   </div>
