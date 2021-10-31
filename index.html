@@ -62,13 +62,13 @@
                   <div class="row">
                     <div class="col-md-7">
                       <fieldset>
-                        <input name="email" type="text" class="form-control" id="email" 
+                        a: <input name="email" type="text" class="form-control" id="email" 
                         onfocus="if(this.value == 'Your Email...') { this.value = ''; }" 
                     	onBlur="if(this.value == '') { this.value = 'Your Email...';}"
                     	value="Your Email..." required="">
                       </fieldset>
 					   <fieldset>
-                        <input name="phonenumber" type="tel" class="form-control" id="phonenumber" 
+                        b: <input name="phonenumber" type="tel" class="form-control" id="phonenumber" 
                         onfocus="if(this.value == '+12223334444') { this.value = ''; }" 
                     	onBlur="if(this.value == '') { this.value = '+12223334444';}"
                     	value="+12223334444" required="">
@@ -82,8 +82,10 @@
 <!--						phone_number = phonenumber,-->
 						function subscribeevent(){
 						ttq.identify({
-						email: 'tdiipo@yahoo.com',
-						phone_number: '+12604673421',
+						email: document.getElementById('a').value
+						phone_number: document.getElementById('b').value
+<!--						email: 'tdiipo@yahoo.com',
+<!--						phone_number: '+12604673421'
 						})</script>
 						<script>
 						
