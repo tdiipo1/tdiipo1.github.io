@@ -165,10 +165,18 @@
                 <strong class="cart-total-title">Total</strong>
                 <span class="cart-total-price">$0</span>
             </div>
+	    <div>
+	                <button onclick="AddCardInfo()" class="btn btn-primary btn-purchase" type="button">Add Card Info
+		    <script>
+			    function AddCardInfo(){
+			    ttq.track('CompletePayment')}
+		    </script>
+		</button>
+		</div>
             <button onclick="CompletePayment()" class="btn btn-primary btn-purchase" type="button">PURCHASE
 		    <script>
 			    function CompletePayment(){
-			    ttq.track('CompletePayment')}
+			    ttq.track('AddPaymentInfo')}
 		    </script>
 		</button>
         </section>
