@@ -7,14 +7,13 @@
        "TikTok Pixel" --->
 
 	    
-	<script>
-		!function (w, d, t) {
-		  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=i,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};var o=document.createElement("script");o.type="text/javascript",o.async=!0,o.src=i+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};
-		
-		  ttq.load('C5PHHHKVNBDMDRE4RKV0');
-		  ttq.page();
-		}(window, document, 'ttq');
-	</script>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-N5ZCP74');</script>
+<!-- End Google Tag Manager -->
 	
         <title>Diipo's Photo Store | Store</title>
 <!--- 71232994a1e996b7f9f1764af56160f15a18c465--->
@@ -23,10 +22,14 @@
         <script src="store.js" async></script>
     </head>
     <body>
-	    <script>
+	<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N5ZCP74"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<!--		    <script>
 	    ttq.track('ViewContent')
 	    </script>
-<!--		<script>
+	<script>
 			ttq.identify({
 			external_id: '99999999',
 			email: 'tdiipo@yahoo.com',
@@ -85,7 +88,7 @@
 <!--						phone_number: document.getElementById('b').value'1111111111'
 <!--						email: 'tdiipo@yahoo.com',
 <!--						phone_number: '+12604673421'-->
-					    <script>
+<!--					    <script>
 						function subscribeevent(){
 						ttq.track('Subscribe')}
 						</script>
@@ -94,7 +97,7 @@
 						ttq.identify({
 						email: document.getElementById('email').value,
 						phone_number: document.getElementById('phonenumber').value,
-						})}</script>
+						})}</script>-->
                       </fieldset>
                     </div>
                   </div>
@@ -115,7 +118,7 @@
                     <div class="shop-item-details">
                         <span class="shop-item-price">$19.99</span>
                         <button onclick="AddToCart()" class="btn btn-primary shop-item-button" type="button" >ADD TO CART</button>
-			    <script>
+<!--			    <script>
 				    function AddToCart(){
 				    ttq.track('AddToCart', {
 							    content_id: 'tshirt',
@@ -126,7 +129,7 @@
 							    value: 19.99,
 							    currency: 'USD',
 							})}
-			    </script>
+			    </script>-->
 				
                     </div>
                 </div>
@@ -136,7 +139,7 @@
                     <div class="shop-item-details">
                         <span class="shop-item-price">$6.99</span>
                         <button onclick="AddToCart2()" class="btn btn-primary shop-item-button" type="button">ADD TO CART</button>
-			    <script>
+<!--			    <script>
 				    function AddToCart2(){
 				    ttq.track('AddToCart', {
 							    content_id: 'art',
@@ -147,7 +150,7 @@
 							    value: 6.99,
 							    currency: 'USD',
 							})}
-			    </script>
+			    </script>-->
                     </div>
                 </div>
             </div>
@@ -166,10 +169,10 @@
                 <span class="cart-total-price">$0</span>
             </div>
             <button onclick="CompletePayment()" class="btn btn-primary btn-purchase" type="button">PURCHASE
-		    <script>
+<!--		    <script>
 			    function CompletePayment(){
 			    ttq.track('CompletePayment')}
-		    </script>
+		    </script>-->
 		</button>
         </section>
         <footer class="main-footer">
