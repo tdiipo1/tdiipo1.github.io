@@ -1,210 +1,426 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
-<!---<<<<<<< HEAD
-        <title>Diipo's Photo Store | Store</title>
-=======
-       "TikTok Pixel" --->
-
-	    
-	<script>
-		!function (w, d, t) {
-		  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=i,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};var o=document.createElement("script");o.type="text/javascript",o.async=!0,o.src=i+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};
-		
-		  ttq.load('C5PHHHKVNBDMDRE4RKV0');
-		  ttq.page();
-		}(window, document, 'ttq');
-	</script>
-	
-        <title>Diipo's Photo Store | Store</title>
-<!--- 71232994a1e996b7f9f1764af56160f15a18c465--->
-        <meta name="description" content="This is the description">
-        <link rel="stylesheet" href="styles.css" />
-        <script src="store.js" async></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Affirm Integration Testing Suite</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     </head>
     <body>
-	    <script>
-	    ttq.track('ViewContent')
-	    </script>
-<!--		<script>
-			ttq.identify({
-			external_id: '99999999',
-			email: 'tdiipo@yahoo.com',
-			phone_number: '+12604673421',
-		})</script>-->
         <header class="main-header">
-            <nav class="main-nav nav">
-                <ul>
-                    <li><a href="index.html">HOME</a></li>
-					<li><a href="gtm.html">GTM</a></li>
+        <div class="container">
+            <h1>Affirm Integration Testing Suite</h1>
+            <p class="subtitle">Partner Engineering Testing Tools & Scenarios</p>
+        </div>
+    </header>
+
+    <nav class="main-nav">
+        <div class="container">
+            <ul class="nav-links">
+                <li><a href="#promotional-messaging">Promotional Messaging</a></li>
+                <li><a href="#direct-api">Direct API</a></li>
+                <li><a href="#affirm-lite">Affirm Lite</a></li>
+                <li><a href="#vcn">Virtual Card Network</a></li>
+                <li><a href="#transaction-lifecycle">Transaction Lifecycle</a></li>
+                <li><a href="#api-testing">API Testing</a></li>
+                <li><a href="#resources">Resources</a></li>
                 </ul>
+        </div>
             </nav>
-            <h1 class="band-name band-name-large">Photo Store</h1>
-        </header>
-        <section class="container content-section">
-            <h2 class="section-header">Enjoy captured memories</h2>
-            <div class="shop-items">
-        </section>
-		    <!-- Subscribe Form Starts Here -->
-    <div class="subscribe-form">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-12">
-            <div class="section-heading">
-              <div class="line-dec"></div>
-              <h1>Subscribe on the Diipo Store!</h1>
+
+    <main class="container">
+        <!-- Promotional Messaging Section -->
+        <section id="promotional-messaging" class="test-section">
+            <h2>Promotional Messaging Tests</h2>
+            <p class="section-description">Test Affirm promotional messaging components and prequalification flows</p>
+            
+            <div class="test-cards">
+                <div class="test-card">
+                    <h3>Product Page Messaging</h3>
+                    <p>Test promotional messaging on product pages with different price points</p>
+                    <div class="test-controls">
+                        <label>Product Price: $<input type="number" id="product-price" value="199.99" min="0" step="0.01"></label>
+                        <button class="btn btn-primary" onclick="testProductPageMessaging()">Test Product Page</button>
+                    </div>
+                    <div id="product-messaging-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Cart View Messaging</h3>
+                    <p>Test promotional messaging in cart view with cart totals</p>
+                    <div class="test-controls">
+                        <label>Cart Total: $<input type="number" id="cart-total" value="299.99" min="0" step="0.01"></label>
+                        <button class="btn btn-primary" onclick="testCartMessaging()">Test Cart View</button>
+                    </div>
+                    <div id="cart-messaging-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Banner Messaging</h3>
+                    <p>Test banner promotional messaging components</p>
+                    <div class="test-controls">
+                        <label>Minimum Amount: $<input type="number" id="banner-min" value="50" min="0" step="0.01"></label>
+                        <button class="btn btn-primary" onclick="testBannerMessaging()">Test Banner</button>
+                    </div>
+                    <div id="banner-messaging-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Prequalification Flow</h3>
+                    <p>Test customer prequalification without impacting credit score</p>
+                    <div class="test-controls">
+                        <label>Customer Email: <input type="email" id="prequal-email" value="test@example.com"></label>
+                        <label>Purchase Amount: $<input type="number" id="prequal-amount" value="500" min="0" step="0.01"></label>
+                        <button class="btn btn-primary" onclick="testPrequalification()">Test Prequalification</button>
+                    </div>
+                    <div id="prequal-result" class="test-result"></div>
+                </div>
             </div>
+        </section>
+
+        <!-- Direct API Section -->
+        <section id="direct-api" class="test-section">
+            <h2>Direct API Integration Tests</h2>
+            <p class="section-description">Test Direct API checkout flows, authorization, and transaction management</p>
+            
+            <div class="test-cards">
+                <div class="test-card">
+                    <h3>Checkout Initialization</h3>
+                    <p>Test creating and initializing a Direct API checkout</p>
+                    <div class="test-controls">
+                        <label>Order Amount: $<input type="number" id="checkout-amount" value="199.99" min="0" step="0.01"></label>
+                        <label>Merchant Name: <input type="text" id="merchant-name" value="Test Merchant"></label>
+                        <label>Checkout Type: 
+                            <select id="checkout-type">
+                                <option value="modal">Modal</option>
+                                <option value="redirect">Redirect</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-primary" onclick="testCheckoutInit()">Initialize Checkout</button>
+                    </div>
+                    <div id="checkout-init-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Transaction Authorization</h3>
+                    <p>Test authorizing a transaction with a checkout token</p>
+                    <div class="test-controls">
+                        <label>Checkout Token: <input type="text" id="checkout-token" placeholder="Enter checkout token"></label>
+                        <label>Order ID: <input type="text" id="order-id" placeholder="Enter order ID"></label>
+                        <button class="btn btn-primary" onclick="testTransactionAuth()">Authorize Transaction</button>
+                    </div>
+                    <div id="transaction-auth-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Transaction Capture</h3>
+                    <p>Test capturing an authorized transaction</p>
+                    <div class="test-controls">
+                        <label>Transaction ID: <input type="text" id="capture-transaction-id" placeholder="Enter transaction ID"></label>
+                        <label>Capture Amount: $<input type="number" id="capture-amount" value="0" min="0" step="0.01" placeholder="Leave 0 for full capture"></label>
+                        <button class="btn btn-primary" onclick="testTransactionCapture()">Capture Transaction</button>
+                    </div>
+                    <div id="transaction-capture-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Split Capture</h3>
+                    <p>Test split capture functionality for partial captures</p>
+                    <div class="test-controls">
+                        <label>Transaction ID: <input type="text" id="split-transaction-id" placeholder="Enter transaction ID"></label>
+                        <label>First Capture: $<input type="number" id="split-first" value="100" min="0" step="0.01"></label>
+                        <label>Second Capture: $<input type="number" id="split-second" value="99.99" min="0" step="0.01"></label>
+                        <button class="btn btn-primary" onclick="testSplitCapture()">Test Split Capture</button>
+                    </div>
+                    <div id="split-capture-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Transaction Void</h3>
+                    <p>Test voiding an authorized transaction</p>
+                    <div class="test-controls">
+                        <label>Transaction ID: <input type="text" id="void-transaction-id" placeholder="Enter transaction ID"></label>
+                        <button class="btn btn-danger" onclick="testTransactionVoid()">Void Transaction</button>
+                    </div>
+                    <div id="transaction-void-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Transaction Refund</h3>
+                    <p>Test refunding a captured transaction</p>
+                    <div class="test-controls">
+                        <label>Transaction ID: <input type="text" id="refund-transaction-id" placeholder="Enter transaction ID"></label>
+                        <label>Refund Amount: $<input type="number" id="refund-amount" value="0" min="0" step="0.01" placeholder="Leave 0 for full refund"></label>
+                        <button class="btn btn-danger" onclick="testTransactionRefund()">Refund Transaction</button>
+                    </div>
+                    <div id="transaction-refund-result" class="test-result"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Affirm Lite Section -->
+        <section id="affirm-lite" class="test-section">
+            <h2>Affirm Lite Integration Tests</h2>
+            <p class="section-description">Test Affirm Lite pop-up checkout and virtual card generation</p>
+            
+            <div class="test-cards">
+                <div class="test-card">
+                    <h3>Lite Checkout Flow</h3>
+                    <p>Test the Affirm Lite pop-up checkout experience</p>
+                    <div class="test-controls">
+                        <label>Order Amount: $<input type="number" id="lite-amount" value="149.99" min="0" step="0.01"></label>
+                        <label>Enable Autofill: <input type="checkbox" id="lite-autofill" checked></label>
+                        <button class="btn btn-primary" onclick="testLiteCheckout()">Test Lite Checkout</button>
+                    </div>
+                    <div id="lite-checkout-result" class="test-result"></div>
           </div>
-          <div class="col-md-8 offset-md-2">
-            <div class="main-content">
-              <p>Enter your email address and Subscribe Now!4</p>
-              <div class="container">
-                <form id="subscribe" action="" method="get">
-                  <div class="row">
-                    <div class="col-md-7">
-                      <fieldset>
-                        Email Address: <input name="email" type="text" class="form-control" id="email" 
-                        onfocus="if(this.value == 'Your Email...') { this.value = ''; }" 
-                    	onBlur="if(this.value == '') { this.value = 'Your Email...';}"
-                    	value="Your Email..." required="">
-                      </fieldset>
-					   <fieldset>
-                        Phone #: <input name="phonenumber" type="tel" class="form-control" id="phonenumber" 
-                        onfocus="if(this.value == '+12223334444') { this.value = ''; }" 
-                    	onBlur="if(this.value == '') { this.value = '+12223334444';}"
-                    	value="+12223334444" required="">
-                      </fieldset>
+
+                <div class="test-card">
+                    <h3>Virtual Card Generation</h3>
+                    <p>Test virtual card creation and retrieval</p>
+                    <div class="test-controls">
+                        <label>Checkout Token: <input type="text" id="lite-token" placeholder="Enter checkout token"></label>
+                        <button class="btn btn-primary" onclick="testVirtualCardGen()">Generate Virtual Card</button>
                     </div>
-<!--					<p>email: document.getElementById('a').value
-						phone_number: document.getElementById('b').value</p>-->
-                    <div class="col-md-5">
-                      <fieldset>
-                        <button onclick="subscribeevent();identify();" type="button" id="form-submit" class="btn container-center">Subscribe Now!</button>
-<!--						email: email,,-->
-<!--						phone_number = phonenumber,-->
-<!--						email: document.getElementById('a').value'test@test.com',
-<!--						phone_number: document.getElementById('b').value'1111111111'
-<!--						email: 'tdiipo@yahoo.com',
-<!--						phone_number: '+12604673421'-->
-					    <script>
-						function subscribeevent(){
-						ttq.track('Subscribe')}
-						</script>
-						<script>
-						function identify(){
-						ttq.identify({
-						email: document.getElementById('email').value,
-						phone_number: document.getElementById('phonenumber').value,
-						})}</script>
-                      </fieldset>
+                    <div id="virtual-card-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Fallback to Landing Page</h3>
+                    <p>Test fallback behavior when autofill fails</p>
+                    <div class="test-controls">
+                        <label>Order Amount: $<input type="number" id="fallback-amount" value="199.99" min="0" step="0.01"></label>
+                        <button class="btn btn-primary" onclick="testFallback()">Test Fallback</button>
                     </div>
-                  </div>
-                </form>
+                    <div id="fallback-result" class="test-result"></div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- Subscribe Form Ends Here -->
-        <section class="container content-section">
-            <h2 class="section-header">MERCH</h2>
-            <div class="shop-items">
-                <div class="shop-item">
-                    <span class="shop-item-title">T-Shirt</span>
-                    <img class="shop-item-image" src="Images/Shirt.png">
-                    <div class="shop-item-details">
-                        <span class="shop-item-price">$19.99</span>
-                        <button onclick="AddToCart()" class="btn btn-primary shop-item-button" type="button" >ADD TO CART</button>
-			    <script>
-				    function AddToCart(){
-				    ttq.track('AddToCart', {
-							    content_id: 'tshirt',
-							    content_type: 'product',
-							    content_name: 'tshirt',
-							    quantity: 1,
-							    price: 19.99,
-							    value: 19.99,
-							    currency: 'USD',
-							})}
-			    </script>
-				
+        </section>
+
+        <!-- Virtual Card Network Section -->
+        <section id="vcn" class="test-section">
+            <h2>Virtual Card Network (VCN) Tests</h2>
+            <p class="section-description">Test Virtual Card Network integration and card management</p>
+            
+            <div class="test-cards">
+                <div class="test-card">
+                    <h3>VCN Checkout Flow</h3>
+                    <p>Test Virtual Card Network checkout on web</p>
+                    <div class="test-controls">
+                        <label>Order Amount: $<input type="number" id="vcn-amount" value="249.99" min="0" step="0.01"></label>
+                        <label>Platform: 
+                            <select id="vcn-platform">
+                                <option value="web">Web</option>
+                                <option value="ios">iOS</option>
+                                <option value="android">Android</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-primary" onclick="testVCNCheckout()">Test VCN Checkout</button>
                     </div>
+                    <div id="vcn-checkout-result" class="test-result"></div>
                 </div>
-                <div class="shop-item">
-                    <span class="shop-item-title">Art</span>
-                    <img class="shop-item-image" src="Images/Art.jpg">
-                    <div class="shop-item-details">
-                        <span class="shop-item-price">$6.99</span>
-                        <button onclick="AddToCart2()" class="btn btn-primary shop-item-button" type="button">ADD TO CART</button>
-			    <script>
-				    function AddToCart2(){
-				    ttq.track('AddToCart', {
-							    content_id: 'art',
-							    content_type: 'product',
-							    content_name: 'art',
-							    quantity: 1,
-							    price: 6.99,
-							    value: 6.99,
-							    currency: 'USD',
-							})}
-			    </script>
+
+                <div class="test-card">
+                    <h3>Card Details Retrieval</h3>
+                    <p>Test retrieving virtual card details</p>
+                    <div class="test-controls">
+                        <label>Card ID: <input type="text" id="card-id" placeholder="Enter card ID"></label>
+                        <button class="btn btn-primary" onclick="testCardDetails()">Get Card Details</button>
                     </div>
+                    <div id="card-details-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Card Finalization</h3>
+                    <p>Test finalizing a virtual card</p>
+                    <div class="test-controls">
+                        <label>Card ID: <input type="text" id="finalize-card-id" placeholder="Enter card ID"></label>
+                        <button class="btn btn-primary" onclick="testCardFinalization()">Finalize Card</button>
+          </div>
+                    <div id="card-finalize-result" class="test-result"></div>
+        </div>
+
+                <div class="test-card">
+                    <h3>Card Cancellation</h3>
+                    <p>Test canceling a virtual card</p>
+                    <div class="test-controls">
+                        <label>Card ID: <input type="text" id="cancel-card-id" placeholder="Enter card ID"></label>
+                        <button class="btn btn-danger" onclick="testCardCancellation()">Cancel Card</button>
+      </div>
+                    <div id="card-cancel-result" class="test-result"></div>
+    </div>
+
+                <div class="test-card">
+                    <h3>Telesales VCN</h3>
+                    <p>Test Virtual Card for telesales scenarios</p>
+                    <div class="test-controls">
+                        <label>Order Amount: $<input type="number" id="telesales-amount" value="399.99" min="0" step="0.01"></label>
+                        <label>Customer Phone: <input type="tel" id="telesales-phone" value="+15551234567"></label>
+                        <button class="btn btn-primary" onclick="testTelesalesVCN()">Test Telesales VCN</button>
+                    </div>
+                    <div id="telesales-vcn-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>In-Store VCN</h3>
+                    <p>Test Virtual Card for in-store scenarios</p>
+                    <div class="test-controls">
+                        <label>Order Amount: $<input type="number" id="instore-amount" value="299.99" min="0" step="0.01"></label>
+                        <label>Store Location: <input type="text" id="store-location" value="Store #123"></label>
+                        <button class="btn btn-primary" onclick="testInStoreVCN()">Test In-Store VCN</button>
+                    </div>
+                    <div id="instore-vcn-result" class="test-result"></div>
                 </div>
             </div>
         </section>
-		<section>
-			    <div>
-	                <button onclick="AddCardInfo()" class="btn btn-primary" type="button">Add Card Info
-		    <script>
-			    function AddCardInfo(){
-			    ttq.track('AddPaymentInfo')}
-		    </script>
-		</button>
+
+        <!-- Transaction Lifecycle Section -->
+        <section id="transaction-lifecycle" class="test-section">
+            <h2>Transaction Lifecycle Tests</h2>
+            <p class="section-description">Test complete transaction lifecycle from authorization to settlement</p>
+            
+            <div class="test-cards">
+                <div class="test-card">
+                    <h3>Full Transaction Flow</h3>
+                    <p>Test complete transaction lifecycle: Authorize → Capture → Settlement</p>
+                    <div class="test-controls">
+                        <label>Order Amount: $<input type="number" id="lifecycle-amount" value="199.99" min="0" step="0.01"></label>
+                        <label>Merchant ID: <input type="text" id="lifecycle-merchant-id" placeholder="Enter merchant ID"></label>
+                        <button class="btn btn-primary" onclick="testFullLifecycle()">Test Full Lifecycle</button>
+                    </div>
+                    <div id="lifecycle-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Transaction States</h3>
+                    <p>View and test different transaction states</p>
+                    <div class="test-controls">
+                        <label>Transaction ID: <input type="text" id="state-transaction-id" placeholder="Enter transaction ID"></label>
+                        <button class="btn btn-primary" onclick="testTransactionStates()">Get Transaction State</button>
+                    </div>
+                    <div id="transaction-state-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Update Transaction</h3>
+                    <p>Test updating transaction metadata</p>
+                    <div class="test-controls">
+                        <label>Transaction ID: <input type="text" id="update-transaction-id" placeholder="Enter transaction ID"></label>
+                        <label>Order ID: <input type="text" id="update-order-id" placeholder="New order ID"></label>
+                        <button class="btn btn-primary" onclick="testUpdateTransaction()">Update Transaction</button>
+                    </div>
+                    <div id="update-transaction-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Read Transaction</h3>
+                    <p>Test reading transaction details</p>
+                    <div class="test-controls">
+                        <label>Transaction ID: <input type="text" id="read-transaction-id" placeholder="Enter transaction ID"></label>
+                        <button class="btn btn-primary" onclick="testReadTransaction()">Read Transaction</button>
+                    </div>
+                    <div id="read-transaction-result" class="test-result"></div>
+                </div>
 		</div>
 		</section>
 		
-        <section class="container content-section">
-            <h2 class="section-header">CART</h2>
-            <div class="cart-row">
-                <span class="cart-item cart-header cart-column">ITEM</span>
-                <span class="cart-price cart-header cart-column">PRICE</span>
-                <span class="cart-quantity cart-header cart-column">QUANTITY</span>
+        <!-- API Testing Section -->
+        <section id="api-testing" class="test-section">
+            <h2>API Testing Tools</h2>
+            <p class="section-description">Direct API testing interface for Merchant API endpoints</p>
+            
+            <div class="test-cards">
+                <div class="test-card">
+                    <h3>API Request Builder</h3>
+                    <p>Build and test API requests to Affirm endpoints</p>
+                    <div class="test-controls">
+                        <label>Endpoint: 
+                            <select id="api-endpoint">
+                                <option value="/checkouts">POST /checkouts</option>
+                                <option value="/transactions">POST /transactions</option>
+                                <option value="/transactions/{id}">GET /transactions/{id}</option>
+                                <option value="/transactions/{id}/capture">POST /transactions/{id}/capture</option>
+                                <option value="/transactions/{id}/void">POST /transactions/{id}/void</option>
+                                <option value="/transactions/{id}/refund">POST /transactions/{id}/refund</option>
+                                <option value="/cards/{id}">GET /cards/{id}</option>
+                                <option value="/cards/{id}/finalize">POST /cards/{id}/finalize</option>
+                                <option value="/cards/{id}/cancel">POST /cards/{id}/cancel</option>
+                            </select>
+                        </label>
+                        <label>Method: 
+                            <select id="api-method">
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="PATCH">PATCH</option>
+                                <option value="DELETE">DELETE</option>
+                            </select>
+                        </label>
+                        <label>Request Body (JSON): <textarea id="api-body" rows="6" placeholder='{"key": "value"}'></textarea></label>
+                        <label>API Key: <input type="text" id="api-key" placeholder="Enter API key (optional)"></label>
+                        <button class="btn btn-primary" onclick="testAPIRequest()">Send API Request</button>
+                    </div>
+                    <div id="api-request-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Environment Configuration</h3>
+                    <p>Configure API environment settings</p>
+                    <div class="test-controls">
+                        <label>Environment: 
+                            <select id="api-environment">
+                                <option value="sandbox">Sandbox</option>
+                                <option value="production">Production</option>
+                            </select>
+                        </label>
+                        <label>Public API Key: <input type="text" id="public-api-key" placeholder="Public API key"></label>
+                        <label>Private API Key: <input type="password" id="private-api-key" placeholder="Private API key"></label>
+                        <button class="btn btn-secondary" onclick="saveAPIConfig()">Save Configuration</button>
+                    </div>
+                    <div id="api-config-result" class="test-result"></div>
+                </div>
             </div>
-            <div class="cart-items">
-            </div>
-            <div class="cart-total">
-                <strong class="cart-total-title">Total</strong>
-                <span class="cart-total-price">$0</span>
-            </div>
-            <button onclick="CompletePayment()" class="btn btn-primary btn-purchase" type="button">PURCHASE
-		    <script>
-			    function CompletePayment(){
-			    ttq.track('CompletePayment')}
-		    </script>
-		</button>
         </section>
+
+        <!-- Resources Section -->
+        <section id="resources" class="test-section">
+            <h2>Resources & Documentation</h2>
+            <p class="section-description">Quick access to Affirm documentation and resources</p>
+            
+            <div class="resource-cards">
+                <div class="resource-card">
+                    <h3>Documentation Links</h3>
+                    <ul class="resource-links">
+                        <li><a href="https://docs.affirm.com/developers/docs/home-introduction" target="_blank">Introduction to Affirm</a></li>
+                        <li><a href="https://docs.affirm.com/payments/docs/direct-api-overview" target="_blank">Direct API Overview</a></li>
+                        <li><a href="https://docs.affirm.com/payments/docs/affirm-lite-integration-guide" target="_blank">Affirm Lite Integration</a></li>
+                        <li><a href="https://docs.affirm.com/payments/docs/vcn-overview" target="_blank">Virtual Card Network Overview</a></li>
+                        <li><a href="https://docs.affirm.com/developers/docs/solutions-we-offer" target="_blank">Solutions We Offer</a></li>
+                    </ul>
+                </div>
+                
+                <div class="resource-card">
+                    <h3>Quick Reference</h3>
+                    <ul class="resource-links">
+                        <li><a href="https://docs.affirm.com/developers/docs/api-reference" target="_blank">API Reference</a></li>
+                        <li><a href="https://docs.affirm.com/developers/docs/recipes" target="_blank">Code Recipes</a></li>
+                        <li><a href="https://docs.affirm.com/developers/docs/changelog" target="_blank">Changelog</a></li>
+                    </ul>
+            </div>
+            </div>
+        </section>
+    </main>
+
         <footer class="main-footer">
-            <div class="container main-footer-container">
-                <h3 class="band-name">Photo Store</h3>
-                <ul class="nav footer-nav">
-                    <li>
-                        <a href="https://www.youtube.com" target="_blank">
-                            <img src="Images/YT.png">
-                        </a>
-                    </li>
-                    <li>
-                        <a href="https://www.Instagram.com" target="_blank">
-                            <img src="Images/Inst.png">
-                        </a>
-                    </li>
-                    <li>
-                        <a href="https://www.facebook.com" target="_blank">
-                            <img src="Images/Facebook Logo.png">
-                        </a>
-                    </li>
-                </ul>
+        <div class="container">
+            <p>Affirm Integration Testing Suite - Partner Engineering Tools</p>
             </div>
         </footer>
+
+    <script src="app.js"></script>
     </body>
 </html>
+
