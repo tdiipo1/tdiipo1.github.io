@@ -12,7 +12,10 @@ const CONFIG = {
         publicKey: '',
         privateKey: ''
     },
-    currentEnv: 'sandbox'
+    currentEnv: 'sandbox',
+    // Set to true to make real API calls (requires valid credentials)
+    // WARNING: Never commit private keys to version control!
+    useRealAPI: false
 };
 
 // Initialize
@@ -70,38 +73,64 @@ function formatJSON(obj) {
     return JSON.stringify(obj, null, 2);
 }
 
-// Utility: Make API call (mock for now - replace with actual API calls)
+// Utility: Make API call
+// NOTE: By default, this uses MOCK responses for safety.
+// Set CONFIG.useRealAPI = true and provide credentials to make real API calls.
+// WARNING: Making API calls from client-side JavaScript exposes your private key!
+// Consider using a backend proxy for production use.
 async function makeAPICall(endpoint, method = 'GET', body = null) {
     const config = CONFIG[CONFIG.currentEnv];
     const url = `${config.baseUrl}${endpoint}`;
+    
+    // If useRealAPI is false, return mock response
+    if (!CONFIG.useRealAPI) {
+        return await simulateAPICall(url, method, body);
+    }
+
+    // Check if credentials are provided
+    if (!config.publicKey || !config.privateKey) {
+        return {
+            success: false,
+            error: 'API credentials not configured. Please provide Public API Key and Private API Key in the Environment Configuration section.'
+        };
+    }
     
     const options = {
         method: method,
         headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Authorization': `Basic ${btoa(config.publicKey + ':' + config.privateKey)}`
         }
     };
-
-    if (config.publicKey) {
-        options.headers['Authorization'] = `Basic ${btoa(config.publicKey + ':' + config.privateKey)}`;
-    }
 
     if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
         options.body = JSON.stringify(body);
     }
 
     try {
-        // In a real implementation, this would make an actual API call
-        // For now, we'll simulate the response
-        const response = await simulateAPICall(url, method, body);
-        return { success: true, data: response };
+        // Make actual API call
+        const response = await fetch(url, options);
+        const data = await response.json();
+        
+        if (!response.ok) {
+            return {
+                success: false,
+                error: `API Error (${response.status}): ${data.message || JSON.stringify(data)}`
+            };
+        }
+        
+        return { success: true, data: data };
     } catch (error) {
-        return { success: false, error: error.message };
+        return {
+            success: false,
+            error: `Network Error: ${error.message}. Check CORS settings if calling from browser.`
+        };
     }
 }
 
-// Simulate API call (replace with actual fetch in production)
+// Simulate API call (used when CONFIG.useRealAPI is false)
+// This provides safe mock responses without requiring credentials
 async function simulateAPICall(url, method, body) {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -111,18 +140,28 @@ async function simulateAPICall(url, method, body) {
         '/checkouts': {
             id: 'checkout_' + Date.now(),
             checkout_token: 'token_' + Math.random().toString(36).substr(2, 9),
-            created: new Date().toISOString()
+            created: new Date().toISOString(),
+            _note: 'This is a MOCK response. Enable real API calls in configuration to make actual requests.'
         },
         '/transactions': {
             id: 'transaction_' + Date.now(),
             status: 'authorized',
             amount: body?.amount || 0,
-            created: new Date().toISOString()
+            created: new Date().toISOString(),
+            _note: 'This is a MOCK response. Enable real API calls in configuration to make actual requests.'
         }
     };
 
     const endpoint = url.split('/api/v2')[1] || url;
-    return mockResponses[endpoint] || { message: 'Mock response', url, method, body };
+    const mockResponse = mockResponses[endpoint] || { 
+        message: 'Mock response', 
+        url, 
+        method, 
+        body,
+        _note: 'This is a MOCK response. Enable real API calls in configuration to make actual requests.'
+    };
+    
+    return { success: true, data: mockResponse };
 }
 
 // Promotional Messaging Tests
@@ -655,16 +694,31 @@ function saveAPIConfig() {
     const env = document.getElementById('api-environment').value;
     const publicKey = document.getElementById('public-api-key').value;
     const privateKey = document.getElementById('private-api-key').value;
+    const useRealAPI = document.getElementById('use-real-api')?.checked || false;
     
     CONFIG.currentEnv = env;
+    CONFIG.useRealAPI = useRealAPI;
     if (publicKey) CONFIG[env].publicKey = publicKey;
     if (privateKey) CONFIG[env].privateKey = privateKey;
     
     localStorage.setItem('affirmConfig', JSON.stringify(CONFIG));
     
-    displayResult('api-config-result', 
-        `Configuration saved!\n\nEnvironment: ${env}\nPublic Key: ${publicKey ? '***' + publicKey.slice(-4) : 'Not set'}\nPrivate Key: ${privateKey ? '***' + privateKey.slice(-4) : 'Not set'}`,
-        'success');
+    let message = `Configuration saved!\n\nEnvironment: ${env}\n`;
+    message += `Use Real API: ${useRealAPI ? 'YES ⚠️' : 'NO (Mock Mode)'}\n`;
+    message += `Public Key: ${publicKey ? '***' + publicKey.slice(-4) : 'Not set'}\n`;
+    message += `Private Key: ${privateKey ? '***' + privateKey.slice(-4) : 'Not set'}\n\n`;
+    
+    if (useRealAPI) {
+        message += `⚠️ WARNING: Real API calls enabled!\n`;
+        message += `Your private key will be exposed in browser network requests.\n`;
+        message += `Only use this for testing, never in production!`;
+    } else {
+        message += `ℹ️ Currently using MOCK responses for safety.\n`;
+        message += `Enable "Use Real API" to make actual API calls.`;
+    }
+    
+    displayResult('api-config-result', message, useRealAPI ? 'warning' : 'info');
+    updateAPIModeBanner();
 }
 
 function loadAPIConfig() {
@@ -674,9 +728,27 @@ function loadAPIConfig() {
         Object.assign(CONFIG, savedConfig);
         
         document.getElementById('api-environment').value = CONFIG.currentEnv;
+        document.getElementById('use-real-api').checked = CONFIG.useRealAPI || false;
         if (CONFIG[CONFIG.currentEnv].publicKey) {
             document.getElementById('public-api-key').value = CONFIG[CONFIG.currentEnv].publicKey;
         }
+        if (CONFIG[CONFIG.currentEnv].privateKey) {
+            document.getElementById('private-api-key').value = CONFIG[CONFIG.currentEnv].privateKey;
+        }
+    }
+    updateAPIModeBanner();
+}
+
+function updateAPIModeBanner() {
+    const banner = document.getElementById('api-mode-banner');
+    const text = document.getElementById('api-mode-text');
+    
+    if (CONFIG.useRealAPI) {
+        banner.className = 'api-mode-banner real';
+        text.textContent = '⚠️ REAL API MODE: Making actual API calls to Affirm (credentials required)';
+    } else {
+        banner.className = 'api-mode-banner mock';
+        text.textContent = '🔒 MOCK MODE: Using simulated API responses (safe, no credentials needed)';
     }
 }
 

@@ -14,6 +14,9 @@
         <div class="container">
             <h1>Affirm Integration Testing Suite</h1>
             <p class="subtitle">Partner Engineering Testing Tools & Scenarios</p>
+            <div id="api-mode-banner" class="api-mode-banner">
+                <span id="api-mode-text">🔒 Mock Mode: Using simulated API responses (safe, no credentials needed)</span>
+            </div>
         </div>
     </header>
 
@@ -376,6 +379,15 @@
                                 <option value="production">Production</option>
                             </select>
                         </label>
+                        <label style="flex-direction: row; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="use-real-api" style="width: auto; margin: 0;">
+                            <span style="font-weight: 600; color: #dc3545;">Enable Real API Calls</span>
+                        </label>
+                        <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 0.75rem; margin: 0.5rem 0; font-size: 0.85rem;">
+                            <strong>⚠️ Security Warning:</strong> By default, this tool uses <strong>MOCK responses</strong> for safety. 
+                            Enabling real API calls will expose your private key in browser network requests. 
+                            Only use this for testing in a secure environment, never commit credentials to version control!
+                        </div>
                         <label>Public API Key: <input type="text" id="public-api-key" placeholder="Public API key"></label>
                         <label>Private API Key: <input type="password" id="private-api-key" placeholder="Private API key"></label>
                         <button class="btn btn-secondary" onclick="saveAPIConfig()">Save Configuration</button>
