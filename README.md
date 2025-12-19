@@ -69,12 +69,54 @@ This script can be extended to programmatically generate test scenarios or updat
 └── README.md           # This file
 ```
 
-## Notes
+## API Calls & Security
 
-- The current implementation uses mock API responses for demonstration
-- Replace the `simulateAPICall` function in `app.js` with actual API calls for production use
-- API keys should be stored securely and not committed to the repository
+### Default Behavior: Mock Mode
+**By default, this tool does NOT make real API calls to Affirm.** It uses mock/simulated responses for safety. This means:
+- ✅ No credentials required to use the tool
+- ✅ Safe to use without exposing API keys
+- ✅ Perfect for testing UI flows and understanding integration patterns
+- ⚠️ Responses are simulated and won't reflect actual API behavior
+
+### Enabling Real API Calls
+To make actual API calls to Affirm's API:
+
+1. Go to the **API Testing Tools** section
+2. Open **Environment Configuration**
+3. Check the **"Enable Real API Calls"** checkbox
+4. Enter your **Public API Key** and **Private API Key**
+5. Select your environment (Sandbox or Production)
+6. Click **Save Configuration**
+
+### ⚠️ Security Warnings
+
+**CRITICAL:** Making API calls from client-side JavaScript has serious security implications:
+
+1. **Private Key Exposure**: Your private API key will be visible in:
+   - Browser DevTools (Network tab)
+   - Browser JavaScript console
+   - Any browser extensions
+   - Server logs (if proxied)
+
+2. **Best Practices**:
+   - ✅ **Only use in Sandbox environment** for testing
+   - ✅ **Never commit credentials** to version control
+   - ✅ **Use environment variables** if running locally
+   - ✅ **Consider a backend proxy** for production use
+   - ❌ **Never use in production** without a secure backend
+
+3. **Recommended Architecture**:
+   ```
+   Browser → Your Backend Server → Affirm API
+   ```
+   This keeps your private key secure on the server side.
+
+### Notes
+
+- Mock mode is enabled by default for safety
+- Real API calls require valid Affirm API credentials
 - This is a testing tool for Partner Engineers and should not be used for production transactions
+- For production integrations, always use a secure backend server
 
 ## License
 
