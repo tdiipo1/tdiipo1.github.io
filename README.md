@@ -65,6 +65,7 @@ This script can be extended to programmatically generate test scenarios or updat
 ├── index.html          # Main HTML file
 ├── styles.css          # Styling
 ├── app.js              # JavaScript functionality
+├── secure-keys.js      # Secure key management module (AES-256-GCM encryption)
 ├── generate_site.py    # Python site generator script
 └── README.md           # This file
 ```
@@ -78,38 +79,81 @@ This script can be extended to programmatically generate test scenarios or updat
 - ✅ Perfect for testing UI flows and understanding integration patterns
 - ⚠️ Responses are simulated and won't reflect actual API behavior
 
-### Enabling Real API Calls
-To make actual API calls to Affirm's API:
+### Secure Key Management System
+
+This tool implements a **highly secure key management system** using industry-standard encryption:
+
+#### 🔐 Encryption Features
+
+1. **AES-256-GCM Encryption**: Keys are encrypted using AES-256-GCM (Advanced Encryption Standard with Galois/Counter Mode)
+2. **PBKDF2 Key Derivation**: Your passphrase is processed through PBKDF2 with 100,000 iterations and SHA-256 hashing
+3. **Random Salt & IV**: Each encryption uses unique random salt and initialization vector
+4. **Memory-Only Decryption**: Keys are only decrypted in browser memory, never stored in plain text
+5. **Auto-Expiration**: Decrypted keys automatically expire after 30 minutes of inactivity
+6. **Session Management**: Active session timer with ability to extend
+
+#### 🔒 How It Works
+
+1. **Storing Keys**:
+   - Enter your Public API Key and Private API Key
+   - Create a strong passphrase (minimum 8 characters)
+   - Keys are encrypted with your passphrase using AES-256-GCM
+   - Only the encrypted data is stored in localStorage
+   - Original keys are immediately cleared from input fields
+
+2. **Unlocking Keys**:
+   - When you need to use the keys, enter your passphrase
+   - Keys are decrypted in memory only (never persisted)
+   - Session remains active for 30 minutes
+   - Keys automatically clear from memory when session expires
+
+3. **Security Features**:
+   - ✅ Keys never stored in plain text
+   - ✅ Passphrase never stored (you must remember it)
+   - ✅ Auto-expiration prevents long-term exposure
+   - ✅ Memory-only decryption (cleared on page refresh)
+   - ✅ Session extension available
+   - ✅ Manual key clearing option
+
+#### 📋 Using Secure Key Management
 
 1. Go to the **API Testing Tools** section
-2. Open **Environment Configuration**
-3. Check the **"Enable Real API Calls"** checkbox
-4. Enter your **Public API Key** and **Private API Key**
-5. Select your environment (Sandbox or Production)
-6. Click **Save Configuration**
+2. Open **Secure Key Management**
+3. Enter your **Public API Key** and **Private API Key**
+4. Create/enter your **Encryption Passphrase** (remember this!)
+5. Select your **Environment** (Sandbox/Production)
+6. Check **"Enable Real API Calls"** if needed
+7. Click **"Save & Encrypt Keys"**
+
+**To unlock later:**
+- Enter your passphrase in the unlock section
+- Keys will be decrypted in memory for 30 minutes
+- Use "Extend" button to add more time
 
 ### ⚠️ Security Warnings
 
-**CRITICAL:** Making API calls from client-side JavaScript has serious security implications:
+**CRITICAL:** Even with encryption, making API calls from client-side JavaScript has security implications:
 
-1. **Private Key Exposure**: Your private API key will be visible in:
-   - Browser DevTools (Network tab)
-   - Browser JavaScript console
-   - Any browser extensions
-   - Server logs (if proxied)
+1. **Private Key Exposure During API Calls**: When making actual API calls, your private key will be visible in:
+   - Browser DevTools (Network tab) - in the Authorization header
+   - Browser JavaScript console (if inspected)
+   - Any browser extensions with network access
+   - Server logs (if requests are proxied)
 
 2. **Best Practices**:
    - ✅ **Only use in Sandbox environment** for testing
    - ✅ **Never commit credentials** to version control
-   - ✅ **Use environment variables** if running locally
+   - ✅ **Use strong, unique passphrases** (12+ characters recommended)
+   - ✅ **Clear keys from memory** when done testing
    - ✅ **Consider a backend proxy** for production use
    - ❌ **Never use in production** without a secure backend
+   - ❌ **Don't share your passphrase** - it's the key to your encrypted data
 
-3. **Recommended Architecture**:
+3. **Recommended Architecture for Production**:
    ```
    Browser → Your Backend Server → Affirm API
    ```
-   This keeps your private key secure on the server side.
+   This keeps your private key secure on the server side where it can't be accessed by browser tools.
 
 ### Notes
 

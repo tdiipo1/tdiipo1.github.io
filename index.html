@@ -370,28 +370,66 @@
                 </div>
 
                 <div class="test-card">
-                    <h3>Environment Configuration</h3>
-                    <p>Configure API environment settings</p>
-                    <div class="test-controls">
-                        <label>Environment: 
-                            <select id="api-environment">
-                                <option value="sandbox">Sandbox</option>
-                                <option value="production">Production</option>
-                            </select>
-                        </label>
-                        <label style="flex-direction: row; align-items: center; gap: 0.5rem;">
-                            <input type="checkbox" id="use-real-api" style="width: auto; margin: 0;">
-                            <span style="font-weight: 600; color: #dc3545;">Enable Real API Calls</span>
-                        </label>
-                        <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 0.75rem; margin: 0.5rem 0; font-size: 0.85rem;">
-                            <strong>⚠️ Security Warning:</strong> By default, this tool uses <strong>MOCK responses</strong> for safety. 
-                            Enabling real API calls will expose your private key in browser network requests. 
-                            Only use this for testing in a secure environment, never commit credentials to version control!
+                    <h3>Secure Key Management</h3>
+                    <p>Securely store and manage your API keys with encryption</p>
+                    
+                    <!-- Unlock Section (shown when keys are stored but locked) -->
+                    <div id="unlock-section" style="display: none;">
+                        <div class="test-controls">
+                            <div style="background: #d1ecf1; border: 1px solid #bee5eb; border-radius: 4px; padding: 1rem; margin-bottom: 1rem;">
+                                <strong>🔒 Keys are encrypted and stored securely.</strong><br>
+                                Enter your passphrase to unlock them for this session.
+                            </div>
+                            <label>Passphrase: 
+                                <input type="password" id="unlock-passphrase" placeholder="Enter your passphrase" autocomplete="off">
+                            </label>
+                            <button class="btn btn-primary" onclick="unlockKeys()">Unlock Keys</button>
+                            <button class="btn btn-danger" onclick="forgetKeys()" style="margin-top: 0.5rem;">Forget All Keys</button>
                         </div>
-                        <label>Public API Key: <input type="text" id="public-api-key" placeholder="Public API key"></label>
-                        <label>Private API Key: <input type="password" id="private-api-key" placeholder="Private API key"></label>
-                        <button class="btn btn-secondary" onclick="saveAPIConfig()">Save Configuration</button>
                     </div>
+
+                    <!-- Key Entry Section (shown when no keys or when unlocked) -->
+                    <div id="key-entry-section">
+                        <div class="test-controls">
+                            <label>Environment: 
+                                <select id="api-environment">
+                                    <option value="sandbox">Sandbox</option>
+                                    <option value="production">Production</option>
+                                </select>
+                            </label>
+                            <label style="flex-direction: row; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" id="use-real-api" style="width: auto; margin: 0;">
+                                <span style="font-weight: 600; color: #dc3545;">Enable Real API Calls</span>
+                            </label>
+                            
+                            <!-- Session Status -->
+                            <div id="session-status" style="display: none; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; padding: 0.75rem; margin: 0.5rem 0; font-size: 0.85rem;">
+                                <strong>✅ Session Active:</strong> <span id="session-time">--</span> minutes remaining
+                                <button class="btn btn-secondary" onclick="extendSession()" style="margin-left: 1rem; padding: 0.25rem 0.75rem; font-size: 0.85rem;">Extend</button>
+                            </div>
+
+                            <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 0.75rem; margin: 0.5rem 0; font-size: 0.85rem;">
+                                <strong>🔐 Secure Storage:</strong> Keys are encrypted with AES-256-GCM using a passphrase you provide. 
+                                Keys are only decrypted in memory and auto-expire after 30 minutes of inactivity.
+                            </div>
+                            
+                            <label>Public API Key: 
+                                <input type="text" id="public-api-key" placeholder="Public API key" autocomplete="off">
+                            </label>
+                            <label>Private API Key: 
+                                <input type="password" id="private-api-key" placeholder="Private API key" autocomplete="off">
+                            </label>
+                            <label>Encryption Passphrase: 
+                                <input type="password" id="encryption-passphrase" placeholder="Create/enter passphrase (min 8 chars)" autocomplete="off">
+                                <small style="color: #6c757d; margin-top: 0.25rem; display: block;">
+                                    This passphrase encrypts your keys. You'll need it to unlock them later.
+                                </small>
+                            </label>
+                            <button class="btn btn-primary" onclick="saveAPIConfigSecure()">Save & Encrypt Keys</button>
+                            <button class="btn btn-danger" onclick="clearKeysFromMemory()" style="margin-top: 0.5rem;">Clear Keys from Memory</button>
+                        </div>
+                    </div>
+                    
                     <div id="api-config-result" class="test-result"></div>
                 </div>
             </div>
@@ -432,6 +470,7 @@
             </div>
         </footer>
 
+    <script src="secure-keys.js"></script>
     <script src="app.js"></script>
     </body>
 </html>
