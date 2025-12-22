@@ -425,6 +425,12 @@
                                     This passphrase encrypts your keys. You'll need it to unlock them later.
                                 </small>
                             </label>
+                            <label>CORS Proxy (Optional): 
+                                <input type="text" id="cors-proxy" placeholder="https://your-proxy.example.com/ (leave empty to attempt direct calls)" autocomplete="off">
+                                <small style="color: #6c757d; margin-top: 0.25rem; display: block;">
+                                    ⚠️ Required to bypass CORS restrictions. See README for proxy options. Direct browser calls will fail due to CORS.
+                                </small>
+                            </label>
                             <button class="btn btn-primary" onclick="saveAPIConfigSecure()">Save & Encrypt Keys</button>
                             <button class="btn btn-danger" onclick="clearKeysFromMemory()" style="margin-top: 0.5rem;">Clear Keys from Memory</button>
                         </div>

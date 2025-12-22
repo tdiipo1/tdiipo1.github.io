@@ -11,7 +11,13 @@ const CONFIG = {
     currentEnv: 'sandbox',
     // Set to true to make real API calls (requires valid credentials)
     // WARNING: Never commit private keys to version control!
-    useRealAPI: false
+    useRealAPI: false,
+    // CORS Proxy: Optional proxy URL to bypass CORS restrictions
+    // Examples:
+    // - Public proxy: 'https://cors-anywhere.herokuapp.com/'
+    // - Your own proxy: 'https://your-proxy.example.com/'
+    // - Leave empty to attempt direct API calls (will fail due to CORS)
+    corsProxy: ''
 };
 
 // Initialize
@@ -74,9 +80,10 @@ function formatJSON(obj) {
 // NOTE: By default, this uses MOCK responses for safety.
 // Set CONFIG.useRealAPI = true and unlock encrypted keys to make real API calls.
 // Keys are securely encrypted and only decrypted in memory during active session.
+// Use CONFIG.corsProxy to bypass CORS restrictions (see README for options).
 async function makeAPICall(endpoint, method = 'GET', body = null) {
     const config = CONFIG[CONFIG.currentEnv];
-    const url = `${config.baseUrl}${endpoint}`;
+    let url = `${config.baseUrl}${endpoint}`;
     
     // If useRealAPI is false, return mock response
     if (!CONFIG.useRealAPI) {
@@ -90,6 +97,13 @@ async function makeAPICall(endpoint, method = 'GET', body = null) {
             success: false,
             error: 'API credentials not available. Please unlock your encrypted keys using your passphrase in the Secure Key Management section.'
         };
+    }
+    
+    // Apply CORS proxy if configured
+    if (CONFIG.corsProxy) {
+        // Remove trailing slash from proxy if present
+        const proxy = CONFIG.corsProxy.replace(/\/$/, '');
+        url = `${proxy}/${url}`;
     }
     
     const options = {
@@ -106,22 +120,65 @@ async function makeAPICall(endpoint, method = 'GET', body = null) {
     }
 
     try {
-        // Make actual API call
+        // Make actual API call (through proxy if configured)
         const response = await fetch(url, options);
-        const data = await response.json();
+        
+        // Handle non-JSON responses (e.g., CORS errors, network errors)
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            const text = await response.text();
+            // If response is not JSON, try to parse as JSON, otherwise use text
+            try {
+                data = JSON.parse(text);
+            } catch {
+                data = { message: text || `HTTP ${response.status} ${response.statusText}` };
+            }
+        }
         
         if (!response.ok) {
             return {
                 success: false,
-                error: `API Error (${response.status}): ${data.message || JSON.stringify(data)}`
+                error: `API Error (${response.status}): ${data.message || data.error || JSON.stringify(data)}`
             };
         }
         
         return { success: true, data: data };
     } catch (error) {
+        // Handle CORS and network errors
+        if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+            let errorMsg = `CORS Error: Browser cannot make direct API calls to Affirm due to CORS restrictions.\n\n`;
+            
+            if (!CONFIG.corsProxy) {
+                errorMsg += `⚠️ No CORS Proxy configured!\n\n`;
+                errorMsg += `To fix this:\n`;
+                errorMsg += `1. Go to Secure Key Management\n`;
+                errorMsg += `2. Enter a CORS Proxy URL (e.g., http://localhost:3000/proxy/)\n`;
+                errorMsg += `3. See PROXY_SETUP.md for setup instructions\n\n`;
+            } else {
+                errorMsg += `CORS Proxy configured: ${CONFIG.corsProxy}\n`;
+                errorMsg += `If this error persists, check:\n`;
+                errorMsg += `- Proxy server is running\n`;
+                errorMsg += `- Proxy URL is correct\n`;
+                errorMsg += `- Proxy is properly forwarding requests\n\n`;
+            }
+            
+            errorMsg += `Alternative Solutions:\n`;
+            errorMsg += `- Use Affirm.js SDK for client-side checkout\n`;
+            errorMsg += `- Test API calls using curl or Postman\n`;
+            errorMsg += `- Deploy your own backend proxy\n\n`;
+            errorMsg += `For more information, see: https://docs.affirm.com/developers/reference/introduction`;
+            
+            return {
+                success: false,
+                error: errorMsg
+            };
+        }
         return {
             success: false,
-            error: `Network Error: ${error.message}. Check CORS settings if calling from browser.`
+            error: `Network Error: ${error.message}`
         };
     }
 }
@@ -688,8 +745,9 @@ async function saveAPIConfigSecure() {
     const env = document.getElementById('api-environment').value;
     const publicKey = document.getElementById('public-api-key').value.trim();
     const privateKey = document.getElementById('private-api-key').value.trim();
-    const passphrase = document.getElementById('encryption-passphrase').value;
+    const passphrase = document.getElementById('encryption-passphrase').value.trim();
     const useRealAPI = document.getElementById('use-real-api')?.checked || false;
+    const corsProxy = document.getElementById('cors-proxy')?.value.trim() || '';
     
     if (!publicKey || !privateKey) {
         displayResult('api-config-result', 'Error: Both Public API Key and Private API Key are required.', 'error');
@@ -704,11 +762,13 @@ async function saveAPIConfigSecure() {
     try {
         CONFIG.currentEnv = env;
         CONFIG.useRealAPI = useRealAPI;
+        CONFIG.corsProxy = corsProxy;
         
         // Save environment and API mode preferences to localStorage
         const configToSave = {
             currentEnv: env,
-            useRealAPI: useRealAPI
+            useRealAPI: useRealAPI,
+            corsProxy: corsProxy
         };
         localStorage.setItem('affirmConfig', JSON.stringify(configToSave));
         
@@ -724,12 +784,18 @@ async function saveAPIConfigSecure() {
         message += `Environment: ${env}\n`;
         message += `Use Real API: ${useRealAPI ? 'YES ⚠️' : 'NO (Mock Mode)'}\n`;
         message += `Public Key: ***${publicKey.slice(-4)}\n`;
-        message += `Private Key: ***${privateKey.slice(-4)}\n\n`;
+        message += `Private Key: ***${privateKey.slice(-4)}\n`;
+        message += `CORS Proxy: ${corsProxy || 'None (direct calls - will fail due to CORS)'}\n\n`;
         message += `🔐 Keys are encrypted with AES-256-GCM and stored securely.\n`;
         message += `Keys are decrypted in memory only and will expire after 30 minutes of inactivity.\n\n`;
         
         if (useRealAPI) {
             message += `⚠️ WARNING: Real API calls enabled!\n`;
+            if (!corsProxy) {
+                message += `⚠️ CORS Proxy not configured - direct API calls will fail!\n`;
+                message += `Please configure a CORS proxy in the Secure Key Management section.\n`;
+                message += `See README for proxy options.\n\n`;
+            }
             message += `Your private key will be visible in browser network requests.\n`;
             message += `Only use this for testing, never in production!`;
         }
@@ -744,7 +810,7 @@ async function saveAPIConfigSecure() {
 }
 
 async function unlockKeys() {
-    const passphrase = document.getElementById('unlock-passphrase').value;
+    const passphrase = document.getElementById('unlock-passphrase').value.trim();
     
     if (!passphrase) {
         displayResult('api-config-result', 'Error: Passphrase is required.', 'error');
@@ -761,6 +827,10 @@ async function unlockKeys() {
             updateKeyManagementUI();
             updateSessionStatus();
             updateAPIModeBanner();
+        } else {
+            displayResult('api-config-result', 
+                'Error: No encrypted keys found. Please save your keys first using "Save & Encrypt Keys".',
+                'error');
         }
     } catch (error) {
         displayResult('api-config-result', `Error: ${error.message}`, 'error');
@@ -813,9 +883,13 @@ function initializeSecureKeyManager() {
             const savedConfig = JSON.parse(saved);
             CONFIG.currentEnv = savedConfig.currentEnv || 'sandbox';
             CONFIG.useRealAPI = savedConfig.useRealAPI || false;
+            CONFIG.corsProxy = savedConfig.corsProxy || '';
             
             document.getElementById('api-environment').value = CONFIG.currentEnv;
             document.getElementById('use-real-api').checked = CONFIG.useRealAPI;
+            if (document.getElementById('cors-proxy')) {
+                document.getElementById('cors-proxy').value = CONFIG.corsProxy;
+            }
         } catch (e) {
             console.error('Error loading config:', e);
         }

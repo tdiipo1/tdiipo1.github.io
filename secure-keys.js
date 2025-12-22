@@ -109,6 +109,8 @@ class SecureKeyManager {
 
     // Store encrypted keys
     async storeKeys(publicKey, privateKey, passphrase, environment) {
+        // Trim passphrase to prevent whitespace-related decryption failures
+        passphrase = passphrase.trim();
         if (!passphrase || passphrase.length < 8) {
             throw new Error('Passphrase must be at least 8 characters long');
         }
@@ -132,6 +134,9 @@ class SecureKeyManager {
 
     // Load keys into memory (decrypted)
     async loadKeysIntoMemory(passphrase) {
+        // Trim passphrase to prevent whitespace-related decryption failures
+        passphrase = passphrase.trim();
+        
         if (!this.encryptedKeys) {
             const stored = localStorage.getItem('affirmSecureKeys');
             if (!stored) return false;
@@ -212,6 +217,13 @@ class SecureKeyManager {
             this.autoClearTimer = setTimeout(() => {
                 this.clearKeys();
                 updateAPIModeBanner();
+                // Update UI to show unlock section when session expires
+                if (typeof updateKeyManagementUI === 'function') {
+                    updateKeyManagementUI();
+                }
+                if (typeof updateSessionStatus === 'function') {
+                    updateSessionStatus();
+                }
                 if (typeof onSessionExpired === 'function') {
                     onSessionExpired();
                 }
