@@ -105,11 +105,11 @@ async function makeAPICall(endpoint, method = 'GET', body = null) {
         let proxy = CONFIG.corsProxy.trim();
         // Remove trailing slashes
         proxy = proxy.replace(/\/+$/, '');
-        // If proxy doesn't end with /proxy, add it
-        if (!proxy.endsWith('/proxy')) {
-            // If it already has /proxy/, keep it, otherwise add /proxy
-            proxy = proxy.replace(/\/proxy\/?$/, '') + '/proxy';
-        }
+        // Always remove any existing /proxy segments to handle redundant cases like /proxy/proxy
+        // Extract base URL (everything before /proxy)
+        const baseUrl = proxy.replace(/\/proxy\/?.*$/, '');
+        // Ensure it ends with exactly one /proxy
+        proxy = baseUrl + '/proxy';
         // Construct full URL: proxy-url/proxy/https://api.affirm.com/api/v2/endpoint
         url = `${proxy}/${url}`;
     }
@@ -296,7 +296,7 @@ async function testCheckoutInit() {
     
     const checkoutData = {
         merchant: {
-            use_vcn: 'false',  // Required for Direct Checkout API
+            use_vcn: false,  // Required for Direct Checkout API (boolean, not string)
             user_confirmation_url: window.location.origin + '/confirm',
             user_cancel_url: window.location.origin + '/cancel'
         },
@@ -957,23 +957,20 @@ function loadAPIConfig() {
 }
 
 // Proxy server helper functions
-function showProxyInstructions() {
-    const instructions = document.getElementById('proxy-instructions');
-    const instructionsUnlock = document.getElementById('proxy-instructions-unlock');
+function showProxyInstructions(section) {
+    // Toggle only the relevant instruction element based on context
+    let instructions;
+    if (section === 'unlock') {
+        instructions = document.getElementById('proxy-instructions-unlock');
+    } else {
+        instructions = document.getElementById('proxy-instructions');
+    }
     
     if (instructions) {
-        if (instructions.style.display === 'none') {
+        if (instructions.style.display === 'none' || !instructions.style.display) {
             instructions.style.display = 'block';
         } else {
             instructions.style.display = 'none';
-        }
-    }
-    
-    if (instructionsUnlock) {
-        if (instructionsUnlock.style.display === 'none') {
-            instructionsUnlock.style.display = 'block';
-        } else {
-            instructionsUnlock.style.display = 'none';
         }
     }
 }

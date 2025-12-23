@@ -50,7 +50,7 @@ app.all('/proxy/*', async (req, res) => {
         'Accept': 'application/json'
       },
       body: req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'DELETE' 
-        ? JSON.stringify(req.body) 
+        ? (typeof req.body === 'string' ? req.body : JSON.stringify(req.body))
         : undefined
     });
 
