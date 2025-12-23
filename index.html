@@ -383,13 +383,19 @@
                             <input type="checkbox" id="use-real-api" style="width: auto; margin: 0;">
                             <span style="font-weight: 600; color: #dc3545;">Enable Real API Calls</span>
                         </label>
+                        <label>API Base URL or Proxy:
+                            <input type="text" id="api-base-url" placeholder="https://sandbox.affirm.com/api/v2 or http://localhost:5050/proxy">
+                        </label>
                         <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 0.75rem; margin: 0.5rem 0; font-size: 0.85rem;">
-                            <strong>⚠️ Security Warning:</strong> By default, this tool uses <strong>MOCK responses</strong> for safety. 
-                            Enabling real API calls will expose your private key in browser network requests. 
+                            <strong>⚠️ Security Warning:</strong> By default, this tool uses <strong>MOCK responses</strong> for safety.
+                            Enabling real API calls will expose your private key in browser network requests.
                             Only use this for testing in a secure environment, never commit credentials to version control!
                         </div>
                         <label>Public API Key: <input type="text" id="public-api-key" placeholder="Public API key"></label>
                         <label>Private API Key: <input type="password" id="private-api-key" placeholder="Private API key"></label>
+                        <div style="background: #e9ecef; border: 1px solid #ced4da; border-radius: 4px; padding: 0.75rem; font-size: 0.85rem;">
+                            <strong>Note:</strong> The proxy server must be started from your terminal (Node.js). This page only stores the base URL and credentials to send requests to a proxy you are already running.
+                        </div>
                         <button class="btn btn-secondary" onclick="saveAPIConfig()">Save Configuration</button>
                     </div>
                     <div id="api-config-result" class="test-result"></div>

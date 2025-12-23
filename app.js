@@ -21,6 +21,7 @@ const CONFIG = {
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     loadAPIConfig();
+    document.getElementById('api-environment')?.addEventListener('change', updateBaseUrlInput);
     setupSmoothScrolling();
     setupScrollToTop();
 });
@@ -694,17 +695,20 @@ function saveAPIConfig() {
     const env = document.getElementById('api-environment').value;
     const publicKey = document.getElementById('public-api-key').value;
     const privateKey = document.getElementById('private-api-key').value;
+    const baseUrlInput = document.getElementById('api-base-url').value?.trim();
     const useRealAPI = document.getElementById('use-real-api')?.checked || false;
-    
+
     CONFIG.currentEnv = env;
     CONFIG.useRealAPI = useRealAPI;
+    if (baseUrlInput) CONFIG[env].baseUrl = baseUrlInput;
     if (publicKey) CONFIG[env].publicKey = publicKey;
     if (privateKey) CONFIG[env].privateKey = privateKey;
     
     localStorage.setItem('affirmConfig', JSON.stringify(CONFIG));
-    
+
     let message = `Configuration saved!\n\nEnvironment: ${env}\n`;
     message += `Use Real API: ${useRealAPI ? 'YES ⚠️' : 'NO (Mock Mode)'}\n`;
+    message += `Base URL / Proxy: ${CONFIG[env].baseUrl || 'Not set'}\n`;
     message += `Public Key: ${publicKey ? '***' + publicKey.slice(-4) : 'Not set'}\n`;
     message += `Private Key: ${privateKey ? '***' + privateKey.slice(-4) : 'Not set'}\n\n`;
     
@@ -736,7 +740,17 @@ function loadAPIConfig() {
             document.getElementById('private-api-key').value = CONFIG[CONFIG.currentEnv].privateKey;
         }
     }
+    updateBaseUrlInput();
     updateAPIModeBanner();
+}
+
+function updateBaseUrlInput() {
+    const envSelect = document.getElementById('api-environment');
+    const baseUrlField = document.getElementById('api-base-url');
+    const env = envSelect?.value || CONFIG.currentEnv;
+    if (baseUrlField) {
+        baseUrlField.value = CONFIG[env]?.baseUrl || '';
+    }
 }
 
 function updateAPIModeBanner() {

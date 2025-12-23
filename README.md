@@ -46,6 +46,8 @@ Running a tiny proxy keeps your private key off the browser and avoids CORS. A r
 
 ### Quickstart: run the proxy
 
+> 🧭 Can I start this proxy from the https://tdiipo1.github.io Environment Configuration page? **No**—the page only stores configuration in your browser. You must run the Node.js proxy from a terminal (local machine, Codespaces, or a server). Once it is running, point the page to it using the "API Base URL or Proxy" field in Environment Configuration.
+
 1. **Install dependencies** (Node 18+):
    ```bash
    npm install express dotenv node-fetch@2
