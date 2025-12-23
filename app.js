@@ -291,7 +291,6 @@ async function testCheckoutInit() {
     
     const checkoutData = {
         merchant: {
-            public_api_key: publicKey,
             user_confirmation_url: window.location.origin + '/confirm',
             user_cancel_url: window.location.origin + '/cancel'
         },
