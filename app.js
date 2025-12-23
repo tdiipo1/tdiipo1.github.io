@@ -336,8 +336,8 @@ async function testCheckoutInit() {
     const checkoutData = {
         merchant: {
             public_api_key: publicKey,  // Required: public API key must be in request body
-            user_confirmation_url: window.location.origin + '/confirm',
-            user_cancel_url: window.location.origin + '/cancel'
+            user_confirmation_url: 'https://tdiipo1.github.io/confirm',
+            user_cancel_url: 'https://tdiipo1.github.io/cancel'
         },
         items: [{
             display_name: document.getElementById('checkout-item-name')?.value || 'Test Item',
@@ -801,8 +801,8 @@ function updateAPIRequestBody() {
         bodyTemplate = {
             merchant: {
                 public_api_key: publicKey,
-                user_confirmation_url: window.location.origin + '/confirm',
-                user_cancel_url: window.location.origin + '/cancel'
+                user_confirmation_url: 'https://tdiipo1.github.io/confirm',
+                user_cancel_url: 'https://tdiipo1.github.io/cancel'
             },
             items: [{
                 display_name: 'Test Item',
