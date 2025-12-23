@@ -76,6 +76,11 @@ Running a tiny proxy keeps your private key off the browser and avoids CORS. A r
      -d '{"path":"/charges","body":{"merchant_external_reference":"test"}}'
    ```
 
+The proxy exposes two endpoints:
+
+- `POST /proxy` forwards requests to Affirm. Send JSON with a `path`, optional `method`, and optional `body`.
+- `GET /health` returns `{ "status": "ok" }` so you can confirm the server is running.
+
 ### Point the web app to the proxy
 
 In the site’s Environment Configuration, set the base URL to your proxy (e.g., `http://localhost:5050/proxy`). Requests will flow as:
