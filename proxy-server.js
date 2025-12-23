@@ -35,8 +35,21 @@ app.all('/proxy/*', async (req, res) => {
     // /proxy/https://api.affirm.com/api/v2/checkouts -> https://api.affirm.com/api/v2/checkouts
     const targetUrl = req.path.replace('/proxy/', '');
     
+    // Handle case where /proxy/ is accessed without a target URL
+    if (!targetUrl || targetUrl === '') {
+      return res.status(400).json({ 
+        error: 'Invalid request. The /proxy/ endpoint requires a target URL.',
+        usage: 'Format: /proxy/https://sandbox.affirm.com/api/v2/checkout/direct',
+        example: 'http://localhost:3000/proxy/https://sandbox.affirm.com/api/v2/checkout/direct'
+      });
+    }
+    
     if (!targetUrl.startsWith('http')) {
-      return res.status(400).json({ error: 'Invalid URL. URL must start with http:// or https://' });
+      return res.status(400).json({ 
+        error: 'Invalid URL. URL must start with http:// or https://',
+        received: targetUrl,
+        usage: 'Format: /proxy/https://sandbox.affirm.com/api/v2/checkout/direct'
+      });
     }
 
     console.log(`[${new Date().toISOString()}] ${req.method} ${targetUrl}`);
@@ -50,7 +63,7 @@ app.all('/proxy/*', async (req, res) => {
         'Accept': 'application/json'
       },
       body: req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'DELETE' 
-        ? JSON.stringify(req.body) 
+        ? (typeof req.body === 'string' ? req.body : JSON.stringify(req.body))
         : undefined
     });
 

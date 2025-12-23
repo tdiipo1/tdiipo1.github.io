@@ -101,8 +101,16 @@ async function makeAPICall(endpoint, method = 'GET', body = null) {
     
     // Apply CORS proxy if configured
     if (CONFIG.corsProxy) {
-        // Remove trailing slash from proxy if present
-        const proxy = CONFIG.corsProxy.replace(/\/$/, '');
+        // Normalize proxy URL: remove trailing slashes, ensure /proxy/ endpoint
+        let proxy = CONFIG.corsProxy.trim();
+        // Remove trailing slashes
+        proxy = proxy.replace(/\/+$/, '');
+        // Always remove any existing /proxy segments to handle redundant cases like /proxy/proxy
+        // Extract base URL (everything before /proxy)
+        const baseUrl = proxy.replace(/\/proxy\/?.*$/, '');
+        // Ensure it ends with exactly one /proxy
+        proxy = baseUrl + '/proxy';
+        // Construct full URL: proxy-url/proxy/https://api.affirm.com/api/v2/endpoint
         url = `${proxy}/${url}`;
     }
     
@@ -120,6 +128,15 @@ async function makeAPICall(endpoint, method = 'GET', body = null) {
     }
 
     try {
+        // Debug logging (remove in production)
+        console.log('Making API call:', {
+            method: method,
+            url: url,
+            endpoint: endpoint,
+            hasBody: !!body,
+            bodySize: body ? JSON.stringify(body).length : 0
+        });
+        
         // Make actual API call (through proxy if configured)
         const response = await fetch(url, options);
         
@@ -191,6 +208,11 @@ async function simulateAPICall(url, method, body) {
     
     // Return mock response based on endpoint
     const mockResponses = {
+        '/checkout/direct': {
+            checkout_id: 'PO4D77JZ6W5X123T',
+            redirect_url: 'https://sandbox.affirm.com/products/checkout?public_api_key=TEST&checkout_ari=PO4D77JZ6W5X123T',
+            _note: 'This is a MOCK response. Enable real API calls in configuration to make actual requests.'
+        },
         '/checkouts': {
             id: 'checkout_' + Date.now(),
             checkout_token: 'token_' + Math.random().toString(36).substr(2, 9),
@@ -281,9 +303,15 @@ async function testCheckoutInit() {
     const keys = keyManager.getKeys();
     const publicKey = keys ? keys.publicKey : 'YOUR_PUBLIC_KEY';
     
+    // Generate a unique order ID for testing
+    const orderId = 'TEST_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    
+    // Calculate tax amount (10% for testing, adjust as needed)
+    const taxAmount = Math.round(amount * 0.1 * 100) / 100;
+    
     const checkoutData = {
         merchant: {
-            public_api_key: publicKey,
+            public_api_key: publicKey,  // Required: public API key must be in request body
             user_confirmation_url: window.location.origin + '/confirm',
             user_cancel_url: window.location.origin + '/cancel'
         },
@@ -296,9 +324,14 @@ async function testCheckoutInit() {
             item_url: window.location.href
         }],
         shipping: {
-            name: { full: 'Test User' },
+            name: {
+                first: 'John',
+                last: 'Doe',
+                full: 'John Doe'
+            },
             address: {
                 line1: '123 Test St',
+                line2: 'Apt 123',
                 city: 'San Francisco',
                 state: 'CA',
                 zipcode: '94105',
@@ -306,9 +339,13 @@ async function testCheckoutInit() {
             }
         },
         billing: {
-            name: { full: 'Test User' },
+            name: {
+                first: 'John',
+                last: 'Doe'
+            },
             address: {
                 line1: '123 Test St',
+                line2: 'Apt 123',
                 city: 'San Francisco',
                 state: 'CA',
                 zipcode: '94105',
@@ -316,19 +353,24 @@ async function testCheckoutInit() {
             }
         },
         total: amount,
-        metadata: {
-            checkout_type: checkoutType
-        }
+        tax_amount: taxAmount,
+        order_id: orderId
     };
 
-    const response = await makeAPICall('/checkouts', 'POST', checkoutData);
+    // Use the correct endpoint: /api/v2/checkout/direct (not /checkouts)
+    console.log('Checkout Data:', checkoutData);
+    console.log('Endpoint: /checkout/direct');
+    
+    const response = await makeAPICall('/checkout/direct', 'POST', checkoutData);
     
     if (response.success) {
         displayResult('checkout-init-result', 
-            `Checkout initialized successfully!\n\n${formatJSON(response.data)}\n\nNext steps:\n1. Open checkout using: affirm.checkout.open()\n2. Use checkout_token to authorize transaction`,
+            `Checkout initialized successfully!\n\n${formatJSON(response.data)}\n\nNext steps:\n1. Use checkout_id (${response.data.checkout_id || 'N/A'}) to launch the modal\n2. Call affirm.checkout() with checkoutAri and mode: "modal"\n3. Use affirm.checkout.open() to display the modal`,
             'success');
     } else {
-        displayResult('checkout-init-result', `Error: ${response.error}`, 'error');
+        displayResult('checkout-init-result', 
+            `Error: ${response.error}\n\nDebug Info:\n- Endpoint used: /checkout/direct\n- Check browser console for detailed request info`,
+            'error');
     }
 }
 
@@ -943,12 +985,21 @@ function loadAPIConfig() {
 }
 
 // Proxy server helper functions
-function showProxyInstructions() {
-    const instructions = document.getElementById('proxy-instructions');
-    if (instructions.style.display === 'none') {
-        instructions.style.display = 'block';
+function showProxyInstructions(section) {
+    // Toggle only the relevant instruction element based on context
+    let instructions;
+    if (section === 'unlock') {
+        instructions = document.getElementById('proxy-instructions-unlock');
     } else {
-        instructions.style.display = 'none';
+        instructions = document.getElementById('proxy-instructions');
+    }
+    
+    if (instructions) {
+        if (instructions.style.display === 'none' || !instructions.style.display) {
+            instructions.style.display = 'block';
+        } else {
+            instructions.style.display = 'none';
+        }
     }
 }
 
@@ -981,8 +1032,13 @@ function copyProxyCommand() {
 }
 
 async function testProxyConnection() {
-    const proxyUrl = document.getElementById('cors-proxy').value.trim() || 'http://localhost:3000';
-    const healthUrl = proxyUrl.replace(/\/proxy\/?$/, '') + '/health';
+    // Get proxy URL from input or use default
+    const proxyInput = document.getElementById('cors-proxy');
+    let proxyUrl = (proxyInput ? proxyInput.value.trim() : '') || 'http://localhost:3000';
+    
+    // Remove /proxy suffix if present to get base URL
+    proxyUrl = proxyUrl.replace(/\/proxy\/?$/, '');
+    const healthUrl = proxyUrl + '/health';
     
     displayResult('api-config-result', 
         `Testing proxy connection to: ${healthUrl}\n\nPlease wait...`,
