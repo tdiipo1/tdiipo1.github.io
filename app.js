@@ -294,9 +294,15 @@ async function testCheckoutInit() {
     const keys = keyManager.getKeys();
     const publicKey = keys ? keys.publicKey : 'YOUR_PUBLIC_KEY';
     
+    // Generate a unique order ID for testing
+    const orderId = 'TEST_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    
+    // Calculate tax amount (10% for testing, adjust as needed)
+    const taxAmount = Math.round(amount * 0.1 * 100) / 100;
+    
     const checkoutData = {
         merchant: {
-            use_vcn: false,  // Required for Direct Checkout API (boolean, not string)
+            public_api_key: publicKey,  // Required: public API key must be in request body
             user_confirmation_url: window.location.origin + '/confirm',
             user_cancel_url: window.location.origin + '/cancel'
         },
@@ -309,9 +315,14 @@ async function testCheckoutInit() {
             item_url: window.location.href
         }],
         shipping: {
-            name: { full: 'Test User' },
+            name: {
+                first: 'John',
+                last: 'Doe',
+                full: 'John Doe'
+            },
             address: {
                 line1: '123 Test St',
+                line2: 'Apt 123',
                 city: 'San Francisco',
                 state: 'CA',
                 zipcode: '94105',
@@ -319,9 +330,13 @@ async function testCheckoutInit() {
             }
         },
         billing: {
-            name: { full: 'Test User' },
+            name: {
+                first: 'John',
+                last: 'Doe'
+            },
             address: {
                 line1: '123 Test St',
+                line2: 'Apt 123',
                 city: 'San Francisco',
                 state: 'CA',
                 zipcode: '94105',
@@ -329,9 +344,8 @@ async function testCheckoutInit() {
             }
         },
         total: amount,
-        metadata: {
-            checkout_type: checkoutType
-        }
+        tax_amount: taxAmount,
+        order_id: orderId
     };
 
     // Use the correct endpoint: /api/v2/checkout/direct (not /checkouts)
