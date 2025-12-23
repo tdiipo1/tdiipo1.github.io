@@ -78,6 +78,33 @@ function formatJSON(obj) {
     return JSON.stringify(obj, null, 2);
 }
 
+// Utility: Generate idempotency key (must be <= 36 characters per Affirm API)
+function generateIdempotencyKey(prefix, identifier) {
+    // Format: prefix_timestamp_random
+    // Ensure total length <= 36 characters
+    const timestamp = Date.now().toString(36); // Base36 encoding for shorter timestamp
+    const random = Math.random().toString(36).substr(2, 6); // 6 random chars
+    const id = identifier ? identifier.toString().substr(0, 8) : ''; // Max 8 chars from identifier
+    
+    // Build key: prefix_id_timestamp_random (max 36 chars)
+    let key = prefix;
+    if (id) {
+        key += `_${id}`;
+    }
+    key += `_${timestamp}_${random}`;
+    
+    // Ensure it's exactly 36 characters or less
+    if (key.length > 36) {
+        // If too long, use hash-like approach
+        const hash = key.split('').reduce((acc, char) => {
+            return ((acc << 5) - acc) + char.charCodeAt(0) | 0;
+        }, 0).toString(36);
+        key = `${prefix}_${hash}`.substr(0, 36);
+    }
+    
+    return key;
+}
+
 // Utility: Make API call
 // NOTE: By default, this uses MOCK responses for safety.
 // Set CONFIG.useRealAPI = true and unlock encrypted keys to make real API calls.
@@ -394,8 +421,22 @@ async function testCheckoutInit() {
     const response = await makeAPICall('/checkout/direct', 'POST', checkoutData);
     
     if (response.success) {
+        const checkoutId = response.data.checkout_id || 'N/A';
+        
+        // Auto-populate checkout token field for authorization
+        const checkoutTokenField = document.getElementById('checkout-token');
+        if (checkoutTokenField && checkoutId !== 'N/A') {
+            checkoutTokenField.value = checkoutId;
+        }
+        
+        // Auto-populate order ID field for authorization if it's empty
+        const orderIdField = document.getElementById('order-id');
+        if (orderIdField && !orderIdField.value && orderId) {
+            orderIdField.value = orderId;
+        }
+        
         displayResult('checkout-init-result', 
-            `Checkout initialized successfully!\n\nOrder ID: ${orderId}\nCheckout ID: ${response.data.checkout_id || 'N/A'}\n\n${formatJSON(response.data)}\n\nNext steps:\n1. Use checkout_id (${response.data.checkout_id || 'N/A'}) to launch the modal\n2. Call affirm.checkout() with checkoutAri and mode: "modal"\n3. Use affirm.checkout.open() to display the modal`,
+            `Checkout initialized successfully!\n\nOrder ID: ${orderId}\nCheckout ID: ${checkoutId}\n\n${formatJSON(response.data)}\n\n✅ Checkout ID has been auto-populated in the Transaction Authorization section\n\nNext steps:\n1. Go to "Transaction Authorization" section\n2. Click "AUTHORIZE TRANSACTION" (checkout_id is already filled)\n3. After authorization, use the returned transaction_id for capture/void/refund operations`,
             'success');
     } else {
         displayResult('checkout-init-result', 
@@ -424,9 +465,8 @@ async function testTransactionAuth() {
         order_id: finalOrderId
     };
     
-    // Generate a unique idempotency key for this authorization request
-    // Using order_id + timestamp ensures uniqueness while allowing retries with same order_id
-    const idempotencyKey = `auth_${finalOrderId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate a unique idempotency key for this authorization request (<= 36 chars)
+    const idempotencyKey = generateIdempotencyKey('auth', finalOrderId);
 
     // According to Affirm docs: https://docs.affirm.com/developers/reference/authorize_transaction
     // The endpoint is /api/v1/transactions (not /api/v2)
@@ -478,8 +518,24 @@ async function testTransactionAuth() {
         }
         
         if (response.ok) {
+            // Extract transaction_id from response (could be data.id or data.transaction_id)
+            const transactionId = data.id || data.transaction_id || checkoutToken;
+            
+            // Auto-populate transaction_id fields for capture, void, refund, update operations
+            const captureField = document.getElementById('capture-transaction-id');
+            const voidField = document.getElementById('void-transaction-id');
+            const refundField = document.getElementById('refund-transaction-id');
+            const updateField = document.getElementById('update-transaction-id');
+            const splitField = document.getElementById('split-transaction-id');
+            
+            if (captureField) captureField.value = transactionId;
+            if (voidField) voidField.value = transactionId;
+            if (refundField) refundField.value = transactionId;
+            if (updateField) updateField.value = transactionId;
+            if (splitField) splitField.value = transactionId;
+            
             displayResult('transaction-auth-result', 
-                `Transaction authorized successfully!\n\nOrder ID: ${finalOrderId}\nTransaction ID: ${data.id || 'N/A'}\n\n${formatJSON(data)}\n\nStore transaction_id for future operations`,
+                `Transaction authorized successfully!\n\nOrder ID: ${finalOrderId}\nTransaction ID: ${transactionId}\n\n${formatJSON(data)}\n\n✅ Transaction ID has been auto-populated in Capture, Void, Refund, and Update fields`,
                 'success');
         } else {
             displayResult('transaction-auth-result', 
@@ -512,8 +568,8 @@ async function testTransactionCapture() {
         : 'https://api.affirm.com/api/v1';
     const url = `${baseUrl}/transactions/${transactionId}/capture`;
     
-    // Generate idempotency key for capture
-    const idempotencyKey = `capture_${transactionId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate idempotency key for capture (<= 36 chars)
+    const idempotencyKey = generateIdempotencyKey('capt', transactionId);
     
     // Apply CORS proxy if configured
     let finalUrl = url;
@@ -611,8 +667,8 @@ async function testTransactionVoid() {
         : 'https://api.affirm.com/api/v1';
     const url = `${baseUrl}/transactions/${transactionId}/void`;
     
-    // Generate idempotency key for void
-    const idempotencyKey = `void_${transactionId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate idempotency key for void (<= 36 chars)
+    const idempotencyKey = generateIdempotencyKey('void', transactionId);
     
     // Apply CORS proxy if configured
     let finalUrl = url;
@@ -688,8 +744,8 @@ async function testTransactionRefund() {
         : 'https://api.affirm.com/api/v1';
     const url = `${baseUrl}/transactions/${transactionId}/refund`;
     
-    // Generate idempotency key for refund
-    const idempotencyKey = `refund_${transactionId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate idempotency key for refund (<= 36 chars)
+    const idempotencyKey = generateIdempotencyKey('ref', transactionId);
     
     // Apply CORS proxy if configured
     let finalUrl = url;
@@ -861,7 +917,11 @@ async function testCardFinalization() {
         return;
     }
 
-    const response = await makeAPICall(`/cards/${cardId}/finalize`, 'POST');
+    // Generate idempotency key for card finalization (<= 36 chars)
+    const idempotencyKey = generateIdempotencyKey('fin', cardId);
+    
+    // Cards API uses /api/v2, makeAPICall will handle it correctly
+    const response = await makeAPICall(`/cards/${cardId}/finalize`, 'POST', null, idempotencyKey);
     
     if (response.success) {
         displayResult('card-finalize-result', 
@@ -880,7 +940,11 @@ async function testCardCancellation() {
         return;
     }
 
-    const response = await makeAPICall(`/cards/${cardId}/cancel`, 'POST');
+    // Generate idempotency key for card cancellation (<= 36 chars)
+    const idempotencyKey = generateIdempotencyKey('can', cardId);
+    
+    // Cards API uses /api/v2, makeAPICall will handle it correctly
+    const response = await makeAPICall(`/cards/${cardId}/cancel`, 'POST', null, idempotencyKey);
     
     if (response.success) {
         displayResult('card-cancel-result', 
@@ -1033,6 +1097,9 @@ async function testUpdateTransaction() {
         : 'https://api.affirm.com/api/v1';
     const url = `${baseUrl}/transactions/${transactionId}`;
     
+    // Generate idempotency key for update (<= 36 chars)
+    const idempotencyKey = generateIdempotencyKey('upd', transactionId);
+    
     // Apply CORS proxy if configured
     let finalUrl = url;
     if (CONFIG.corsProxy) {
@@ -1057,7 +1124,8 @@ async function testUpdateTransaction() {
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'Authorization': `Basic ${btoa(keys.publicKey + ':' + keys.privateKey)}`
+            'Authorization': `Basic ${btoa(keys.publicKey + ':' + keys.privateKey)}`,
+            'Idempotency-Key': idempotencyKey
         },
         body: Object.keys(updateData).length > 0 ? JSON.stringify(updateData) : undefined
     };

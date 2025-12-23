@@ -306,9 +306,9 @@
 
                 <div class="test-card">
                     <h3>Transaction Capture</h3>
-                    <p>Test capturing an authorized transaction</p>
+                    <p>Test capturing an authorized transaction. <strong>Note:</strong> Requires a <code>transaction_id</code> from the authorization step (not the <code>checkout_id</code>).</p>
                     <div class="test-controls">
-                        <label>Transaction ID: <input type="text" id="capture-transaction-id" placeholder="Enter transaction ID"></label>
+                        <label>Transaction ID: <input type="text" id="capture-transaction-id" placeholder="Enter transaction_id (from authorization)"></label>
                         <label>Capture Amount: $<input type="number" id="capture-amount" value="0" min="0" step="0.01" placeholder="Leave 0 for full capture"></label>
                         <button class="btn btn-primary" onclick="testTransactionCapture()">Capture Transaction</button>
                     </div>
@@ -317,9 +317,9 @@
 
                 <div class="test-card">
                     <h3>Split Capture</h3>
-                    <p>Test split capture functionality for partial captures</p>
+                    <p>Test split capture functionality for partial captures. <strong>Note:</strong> Requires a <code>transaction_id</code> from authorization.</p>
                     <div class="test-controls">
-                        <label>Transaction ID: <input type="text" id="split-transaction-id" placeholder="Enter transaction ID"></label>
+                        <label>Transaction ID: <input type="text" id="split-transaction-id" placeholder="Enter transaction_id (from authorization)"></label>
                         <label>First Capture: $<input type="number" id="split-first" value="100" min="0" step="0.01"></label>
                         <label>Second Capture: $<input type="number" id="split-second" value="99.99" min="0" step="0.01"></label>
                         <button class="btn btn-primary" onclick="testSplitCapture()">Test Split Capture</button>
@@ -329,9 +329,9 @@
 
                 <div class="test-card">
                     <h3>Transaction Void</h3>
-                    <p>Test voiding an authorized transaction</p>
+                    <p>Test voiding an authorized transaction. <strong>Note:</strong> Requires a <code>transaction_id</code> from authorization.</p>
                     <div class="test-controls">
-                        <label>Transaction ID: <input type="text" id="void-transaction-id" placeholder="Enter transaction ID"></label>
+                        <label>Transaction ID: <input type="text" id="void-transaction-id" placeholder="Enter transaction_id (from authorization)"></label>
                         <button class="btn btn-danger" onclick="testTransactionVoid()">Void Transaction</button>
                     </div>
                     <div id="transaction-void-result" class="test-result"></div>
@@ -339,9 +339,9 @@
 
                 <div class="test-card">
                     <h3>Transaction Refund</h3>
-                    <p>Test refunding a captured transaction</p>
+                    <p>Test refunding a captured transaction. <strong>Note:</strong> Requires a <code>transaction_id</code> from authorization.</p>
                     <div class="test-controls">
-                        <label>Transaction ID: <input type="text" id="refund-transaction-id" placeholder="Enter transaction ID"></label>
+                        <label>Transaction ID: <input type="text" id="refund-transaction-id" placeholder="Enter transaction_id (from authorization)"></label>
                         <label>Refund Amount: $<input type="number" id="refund-amount" value="0" min="0" step="0.01" placeholder="Leave 0 for full refund"></label>
                         <button class="btn btn-danger" onclick="testTransactionRefund()">Refund Transaction</button>
                     </div>
@@ -495,9 +495,9 @@
 
                 <div class="test-card">
                     <h3>Update Transaction</h3>
-                    <p>Test updating transaction metadata</p>
+                    <p>Test updating transaction metadata. <strong>Note:</strong> Requires a <code>transaction_id</code> from authorization.</p>
                     <div class="test-controls">
-                        <label>Transaction ID: <input type="text" id="update-transaction-id" placeholder="Enter transaction ID"></label>
+                        <label>Transaction ID: <input type="text" id="update-transaction-id" placeholder="Enter transaction_id (from authorization)"></label>
                         <label>Order ID: <input type="text" id="update-order-id" placeholder="New order ID"></label>
                         <button class="btn btn-primary" onclick="testUpdateTransaction()">Update Transaction</button>
                     </div>
