@@ -101,8 +101,16 @@ async function makeAPICall(endpoint, method = 'GET', body = null) {
     
     // Apply CORS proxy if configured
     if (CONFIG.corsProxy) {
-        // Remove trailing slash from proxy if present
-        const proxy = CONFIG.corsProxy.replace(/\/$/, '');
+        // Normalize proxy URL: remove trailing slashes, ensure /proxy/ endpoint
+        let proxy = CONFIG.corsProxy.trim();
+        // Remove trailing slashes
+        proxy = proxy.replace(/\/+$/, '');
+        // If proxy doesn't end with /proxy, add it
+        if (!proxy.endsWith('/proxy')) {
+            // If it already has /proxy/, keep it, otherwise add /proxy
+            proxy = proxy.replace(/\/proxy\/?$/, '') + '/proxy';
+        }
+        // Construct full URL: proxy-url/proxy/https://api.affirm.com/api/v2/endpoint
         url = `${proxy}/${url}`;
     }
     
@@ -945,10 +953,22 @@ function loadAPIConfig() {
 // Proxy server helper functions
 function showProxyInstructions() {
     const instructions = document.getElementById('proxy-instructions');
-    if (instructions.style.display === 'none') {
-        instructions.style.display = 'block';
-    } else {
-        instructions.style.display = 'none';
+    const instructionsUnlock = document.getElementById('proxy-instructions-unlock');
+    
+    if (instructions) {
+        if (instructions.style.display === 'none') {
+            instructions.style.display = 'block';
+        } else {
+            instructions.style.display = 'none';
+        }
+    }
+    
+    if (instructionsUnlock) {
+        if (instructionsUnlock.style.display === 'none') {
+            instructionsUnlock.style.display = 'block';
+        } else {
+            instructionsUnlock.style.display = 'none';
+        }
     }
 }
 
@@ -981,8 +1001,13 @@ function copyProxyCommand() {
 }
 
 async function testProxyConnection() {
-    const proxyUrl = document.getElementById('cors-proxy').value.trim() || 'http://localhost:3000';
-    const healthUrl = proxyUrl.replace(/\/proxy\/?$/, '') + '/health';
+    // Get proxy URL from input or use default
+    const proxyInput = document.getElementById('cors-proxy');
+    let proxyUrl = (proxyInput ? proxyInput.value.trim() : '') || 'http://localhost:3000';
+    
+    // Remove /proxy suffix if present to get base URL
+    proxyUrl = proxyUrl.replace(/\/proxy\/?$/, '');
+    const healthUrl = proxyUrl + '/health';
     
     displayResult('api-config-result', 
         `Testing proxy connection to: ${healthUrl}\n\nPlease wait...`,
