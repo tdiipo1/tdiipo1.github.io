@@ -389,7 +389,7 @@ async function testCheckoutInit() {
     
     if (response.success) {
         displayResult('checkout-init-result', 
-            `Checkout initialized successfully!\n\n${formatJSON(response.data)}\n\nNext steps:\n1. Use checkout_id (${response.data.checkout_id || 'N/A'}) to launch the modal\n2. Call affirm.checkout() with checkoutAri and mode: "modal"\n3. Use affirm.checkout.open() to display the modal`,
+            `Checkout initialized successfully!\n\nOrder ID: ${orderId}\nCheckout ID: ${response.data.checkout_id || 'N/A'}\n\n${formatJSON(response.data)}\n\nNext steps:\n1. Use checkout_id (${response.data.checkout_id || 'N/A'}) to launch the modal\n2. Call affirm.checkout() with checkoutAri and mode: "modal"\n3. Use affirm.checkout.open() to display the modal`,
             'success');
     } else {
         displayResult('checkout-init-result', 
@@ -407,6 +407,8 @@ async function testTransactionAuth() {
         return;
     }
 
+    // According to Affirm docs: https://docs.affirm.com/developers/reference/authorize_transaction
+    // Only checkout_token and order_id are required
     const authData = {
         checkout_token: checkoutToken,
         order_id: orderId || 'ORDER_' + Date.now()
@@ -416,10 +418,12 @@ async function testTransactionAuth() {
     
     if (response.success) {
         displayResult('transaction-auth-result', 
-            `Transaction authorized successfully!\n\n${formatJSON(response.data)}\n\nStore transaction_id for future operations`,
+            `Transaction authorized successfully!\n\nOrder ID: ${authData.order_id}\nTransaction ID: ${response.data.id || 'N/A'}\n\n${formatJSON(response.data)}\n\nStore transaction_id for future operations`,
             'success');
     } else {
-        displayResult('transaction-auth-result', `Error: ${response.error}`, 'error');
+        displayResult('transaction-auth-result', 
+            `Error: ${response.error}\n\nDebug Info:\n- Endpoint used: /transactions\n- Order ID: ${authData.order_id}\n- Checkout Token: ${checkoutToken.substring(0, 10)}...\n- Check browser console for detailed request info`,
+            'error');
     }
 }
 
@@ -846,24 +850,10 @@ function updateAPIRequestBody() {
             order_id: orderId
         };
     } else if (endpoint === '/transactions') {
+        // According to Affirm docs, only checkout_token and order_id are required
         bodyTemplate = {
             checkout_token: 'CHECKOUT_TOKEN_HERE',
-            order_id: orderId,
-            shipping: {
-                name: {
-                    first: 'AITS',
-                    last: 'User',
-                    full: 'AITS User'
-                },
-                address: {
-                    line1: '123 Test St',
-                    line2: 'Apt 123',
-                    city: 'San Francisco',
-                    state: 'CA',
-                    zipcode: '94105',
-                    country: 'USA'
-                }
-            }
+            order_id: orderId
         };
     } else if (endpoint.includes('/capture')) {
         bodyTemplate = {
