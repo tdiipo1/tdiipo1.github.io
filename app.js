@@ -426,10 +426,69 @@ async function testTransactionAuth() {
     // Using order_id + timestamp ensures uniqueness while allowing retries with same order_id
     const idempotencyKey = `auth_${finalOrderId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Note: According to Affirm docs, authorize transaction uses /api/v1/transactions
-    // But we're using /api/v2 baseUrl, so we'll try /transactions first
-    // If it fails, we may need to use the full v1 endpoint
-    const response = await makeAPICall('/transactions', 'POST', authData, idempotencyKey);
+    // According to Affirm docs: https://docs.affirm.com/developers/reference/authorize_transaction
+    // The endpoint is /api/v1/transactions (not /api/v2)
+    // We need to use the v1 endpoint specifically for transaction authorization
+    const baseUrl = CONFIG.currentEnv === 'sandbox' 
+        ? 'https://sandbox.affirm.com/api/v1'
+        : 'https://api.affirm.com/api/v1';
+    const url = `${baseUrl}/transactions`;
+    
+    // Apply CORS proxy if configured
+    let finalUrl = url;
+    if (CONFIG.corsProxy) {
+        let proxy = CONFIG.corsProxy.trim();
+        proxy = proxy.replace(/\/+$/, '');
+        const proxyBaseUrl = proxy.replace(/\/proxy\/?.*$/, '');
+        proxy = proxyBaseUrl + '/proxy';
+        finalUrl = `${proxy}/${url}`;
+    }
+    
+    // Get decrypted keys from secure key manager
+    const keys = keyManager.getKeys();
+    if (!keys || !keys.publicKey || !keys.privateKey) {
+        displayResult('transaction-auth-result', 
+            'Error: API credentials not available. Please unlock your encrypted keys using your passphrase in the Secure Key Management section.',
+            'error');
+        return;
+    }
+    
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Basic ${btoa(keys.publicKey + ':' + keys.privateKey)}`,
+            'Idempotency-Key': idempotencyKey
+        },
+        body: JSON.stringify(authData)
+    };
+    
+    try {
+        const response = await fetch(finalUrl, options);
+        
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            data = { message: await response.text() };
+        }
+        
+        if (response.ok) {
+            displayResult('transaction-auth-result', 
+                `Transaction authorized successfully!\n\nOrder ID: ${finalOrderId}\nTransaction ID: ${data.id || 'N/A'}\n\n${formatJSON(data)}\n\nStore transaction_id for future operations`,
+                'success');
+        } else {
+            displayResult('transaction-auth-result', 
+                `Error: API Error (${response.status}): ${data.message || data.error || JSON.stringify(data)}\n\nDebug Info:\n- Endpoint used: ${url}\n- Order ID: ${finalOrderId}\n- Idempotency Key: ${idempotencyKey.substring(0, 30)}...\n- Checkout Token: ${checkoutToken.substring(0, 10)}...\n- Check browser console for detailed request info`,
+                'error');
+        }
+    } catch (error) {
+        displayResult('transaction-auth-result', 
+            `Error: Network Error - ${error.message}\n\nDebug Info:\n- Endpoint used: ${url}\n- Order ID: ${finalOrderId}\n- Check browser console for detailed error info`,
+            'error');
+    }
     
     if (response.success) {
         displayResult('transaction-auth-result', 
