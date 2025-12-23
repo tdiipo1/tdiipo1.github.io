@@ -26,6 +26,8 @@ document.addEventListener('DOMContentLoaded', function() {
     setupSmoothScrolling();
     setupScrollToTop();
     setupSessionTimer();
+    // Initialize API Request Builder with prefilled body
+    updateAPIRequestBody();
 });
 
 // Smooth scrolling for navigation links
@@ -304,10 +306,32 @@ async function testCheckoutInit() {
     const publicKey = keys ? keys.publicKey : 'YOUR_PUBLIC_KEY';
     
     // Generate a unique order ID for testing
-    const orderId = 'TEST_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const orderId = document.getElementById('checkout-order-id')?.value || 'TEST_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     
-    // Calculate tax amount (10% for testing, adjust as needed)
-    const taxAmount = Math.round(amount * 0.1 * 100) / 100;
+    // Convert amounts to cents (integers) - Affirm API requires amounts in smallest currency unit
+    const amountCents = Math.round(amount * 100);
+    const taxAmountCents = Math.round(parseFloat(document.getElementById('checkout-tax-amount')?.value || (amount * 0.1)) * 100);
+    
+    // Get shipping info from form or use defaults
+    const shippingFirstName = document.getElementById('shipping-first-name')?.value || 'AITS';
+    const shippingLastName = document.getElementById('shipping-last-name')?.value || 'User';
+    const shippingFullName = `${shippingFirstName} ${shippingLastName}`;
+    const shippingLine1 = document.getElementById('shipping-line1')?.value || '123 Test St';
+    const shippingLine2 = document.getElementById('shipping-line2')?.value || 'Apt 123';
+    const shippingCity = document.getElementById('shipping-city')?.value || 'San Francisco';
+    const shippingState = document.getElementById('shipping-state')?.value || 'CA';
+    const shippingZipcode = document.getElementById('shipping-zipcode')?.value || '94105';
+    const shippingCountry = document.getElementById('shipping-country')?.value || 'USA';
+    
+    // Get billing info from form or use defaults
+    const billingFirstName = document.getElementById('billing-first-name')?.value || 'AITS';
+    const billingLastName = document.getElementById('billing-last-name')?.value || 'User';
+    const billingLine1 = document.getElementById('billing-line1')?.value || '123 Test St';
+    const billingLine2 = document.getElementById('billing-line2')?.value || 'Apt 123';
+    const billingCity = document.getElementById('billing-city')?.value || 'San Francisco';
+    const billingState = document.getElementById('billing-state')?.value || 'CA';
+    const billingZipcode = document.getElementById('billing-zipcode')?.value || '94105';
+    const billingCountry = document.getElementById('billing-country')?.value || 'USA';
     
     const checkoutData = {
         merchant: {
@@ -316,44 +340,44 @@ async function testCheckoutInit() {
             user_cancel_url: window.location.origin + '/cancel'
         },
         items: [{
-            display_name: 'Test Item',
-            sku: 'TEST-001',
-            unit_price: amount,
-            qty: 1,
-            item_image_url: '',
-            item_url: window.location.href
+            display_name: document.getElementById('checkout-item-name')?.value || 'Test Item',
+            sku: document.getElementById('checkout-item-sku')?.value || 'TEST-001',
+            unit_price: amountCents,  // Convert to cents
+            qty: parseInt(document.getElementById('checkout-item-qty')?.value || '1'),
+            item_image_url: document.getElementById('checkout-item-image-url')?.value || '',
+            item_url: document.getElementById('checkout-item-url')?.value || window.location.href
         }],
         shipping: {
             name: {
-                first: 'John',
-                last: 'Doe',
-                full: 'John Doe'
+                first: shippingFirstName,
+                last: shippingLastName,
+                full: shippingFullName
             },
             address: {
-                line1: '123 Test St',
-                line2: 'Apt 123',
-                city: 'San Francisco',
-                state: 'CA',
-                zipcode: '94105',
-                country: 'USA'
+                line1: shippingLine1,
+                line2: shippingLine2,
+                city: shippingCity,
+                state: shippingState,
+                zipcode: shippingZipcode,
+                country: shippingCountry
             }
         },
         billing: {
             name: {
-                first: 'John',
-                last: 'Doe'
+                first: billingFirstName,
+                last: billingLastName
             },
             address: {
-                line1: '123 Test St',
-                line2: 'Apt 123',
-                city: 'San Francisco',
-                state: 'CA',
-                zipcode: '94105',
-                country: 'USA'
+                line1: billingLine1,
+                line2: billingLine2,
+                city: billingCity,
+                state: billingState,
+                zipcode: billingZipcode,
+                country: billingCountry
             }
         },
-        total: amount,
-        tax_amount: taxAmount,
+        total: amountCents,  // Convert to cents
+        tax_amount: taxAmountCents,  // Convert to cents
         order_id: orderId
     };
 
@@ -743,6 +767,136 @@ async function testReadTransaction() {
 }
 
 // API Testing Tools
+// Function to update request body based on selected endpoint
+function updateAPIRequestBody() {
+    const endpoint = document.getElementById('api-endpoint').value;
+    const method = document.getElementById('api-method').value;
+    const bodyTextarea = document.getElementById('api-body');
+    
+    // Get keys if available
+    const keys = keyManager.getKeys();
+    const publicKey = keys ? keys.publicKey : 'YOUR_PUBLIC_KEY';
+    
+    // Generate sample data
+    const orderId = 'TEST_' + Date.now();
+    const amountCents = 19999; // $199.99 in cents
+    const taxAmountCents = 1999; // $19.99 in cents
+    
+    let bodyTemplate = {};
+    
+    // Set method based on endpoint if it's a POST endpoint
+    if (endpoint === '/checkout/direct' || endpoint === '/transactions' || 
+        endpoint.includes('/capture') || endpoint.includes('/void') || 
+        endpoint.includes('/refund') || endpoint.includes('/finalize') || 
+        endpoint.includes('/cancel')) {
+        document.getElementById('api-method').value = 'POST';
+    } else if (endpoint.includes('/{id}') && !endpoint.includes('/capture') && 
+               !endpoint.includes('/void') && !endpoint.includes('/refund') && 
+               !endpoint.includes('/finalize') && !endpoint.includes('/cancel')) {
+        document.getElementById('api-method').value = 'GET';
+    }
+    
+    // Generate body template based on endpoint
+    if (endpoint === '/checkout/direct') {
+        bodyTemplate = {
+            merchant: {
+                public_api_key: publicKey,
+                user_confirmation_url: window.location.origin + '/confirm',
+                user_cancel_url: window.location.origin + '/cancel'
+            },
+            items: [{
+                display_name: 'Test Item',
+                sku: 'TEST-001',
+                unit_price: amountCents,
+                qty: 1,
+                item_image_url: '',
+                item_url: window.location.href
+            }],
+            shipping: {
+                name: {
+                    first: 'AITS',
+                    last: 'User',
+                    full: 'AITS User'
+                },
+                address: {
+                    line1: '123 Test St',
+                    line2: 'Apt 123',
+                    city: 'San Francisco',
+                    state: 'CA',
+                    zipcode: '94105',
+                    country: 'USA'
+                }
+            },
+            billing: {
+                name: {
+                    first: 'AITS',
+                    last: 'User'
+                },
+                address: {
+                    line1: '123 Test St',
+                    line2: 'Apt 123',
+                    city: 'San Francisco',
+                    state: 'CA',
+                    zipcode: '94105',
+                    country: 'USA'
+                }
+            },
+            total: amountCents,
+            tax_amount: taxAmountCents,
+            order_id: orderId
+        };
+    } else if (endpoint === '/transactions') {
+        bodyTemplate = {
+            checkout_token: 'CHECKOUT_TOKEN_HERE',
+            order_id: orderId,
+            shipping: {
+                name: {
+                    first: 'AITS',
+                    last: 'User',
+                    full: 'AITS User'
+                },
+                address: {
+                    line1: '123 Test St',
+                    line2: 'Apt 123',
+                    city: 'San Francisco',
+                    state: 'CA',
+                    zipcode: '94105',
+                    country: 'USA'
+                }
+            }
+        };
+    } else if (endpoint.includes('/capture')) {
+        bodyTemplate = {
+            amount: amountCents,
+            order_id: orderId
+        };
+    } else if (endpoint.includes('/refund')) {
+        bodyTemplate = {
+            amount: amountCents,
+            order_id: orderId
+        };
+    } else if (endpoint.includes('/void')) {
+        bodyTemplate = {
+            order_id: orderId
+        };
+    } else if (endpoint.includes('/finalize')) {
+        bodyTemplate = {
+            order_id: orderId
+        };
+    } else if (endpoint.includes('/cancel')) {
+        bodyTemplate = {
+            order_id: orderId
+        };
+    }
+    
+    // Only update body if method requires a body (POST, PUT, PATCH)
+    if (['POST', 'PUT', 'PATCH'].includes(method) && Object.keys(bodyTemplate).length > 0) {
+        bodyTextarea.value = JSON.stringify(bodyTemplate, null, 2);
+    } else {
+        bodyTextarea.value = '';
+    }
+}
+
 async function testAPIRequest() {
     const endpoint = document.getElementById('api-endpoint').value;
     const method = document.getElementById('api-method').value;
