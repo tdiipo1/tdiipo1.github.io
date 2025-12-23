@@ -81,6 +81,29 @@ body {
     50% { opacity: 0.8; }
 }
 
+/* Secure Key Management Styles */
+#unlock-section,
+#key-entry-section {
+    margin-top: 1rem;
+}
+
+#session-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#session-status button {
+    margin-left: auto;
+}
+
+.test-controls small {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
 /* Navigation */
 .main-nav {
     background-color: var(--bg-color);

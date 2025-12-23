@@ -40,45 +40,26 @@ The site is built with static HTML, CSS, and JavaScript. To run locally:
    ```
    Then visit `http://localhost:8000`
 
-## Lightweight Backend Proxy (Node.js)
+### Setting Up the CORS Proxy Server
 
-Running a tiny proxy keeps your private key off the browser and avoids CORS. A ready-to-run example using Express is included in `proxy-server.js`.
+To enable real API calls from the browser, you need to run a CORS proxy server:
 
-### 1) Install dependencies
-
+**Quick Start:**
 ```bash
-npm install express dotenv node-fetch@2
+npm install
+npm start
 ```
 
-### 2) Set environment variables
+**For detailed Mac setup instructions**, see [MAC_SETUP.md](MAC_SETUP.md)
 
-Create a `.env` file (or export vars in your shell):
+The proxy server will run on `http://localhost:3000`. Set this as your CORS Proxy URL in the Secure Key Management section.
 
-```bash
-AFFIRM_PUBLIC_KEY=your_public_key
-AFFIRM_PRIVATE_KEY=your_private_key
-AFFIRM_API_BASE=https://sandbox.affirm.com/api/v1
-PORT=5050
-```
-
-### 3) Run the proxy
-
-```bash
-node proxy-server.js
-```
-
-The proxy exposes:
-
-- `POST /proxy` forwarding to Affirm (expects JSON with `path`, optional `method`, and optional `body`).
-- `GET /health` for a quick status check.
-
-### 4) Point the web app to the proxy
-
-In the site’s Environment Configuration, set the base URL to your proxy (e.g., `http://localhost:5050/proxy`). Requests will flow as:
-
-```
-Browser → proxy-server.js → Affirm Sandbox
-```
+The proxy server (`proxy-server.js`) provides:
+- URL-based routing: `/proxy/*` forwards requests to Affirm API
+- Support for all HTTP methods (GET, POST, PUT, PATCH, DELETE)
+- Health check endpoint: `/health`
+- Automatic CORS handling
+- Request logging
 
 ## Python Site Generator
 
@@ -102,11 +83,15 @@ This script can be extended to programmatically generate test scenarios or updat
 
 ```
 .
-├── index.html          # Main HTML file
-├── styles.css          # Styling
-├── app.js              # JavaScript functionality
-├── generate_site.py    # Python site generator script
-└── README.md           # This file
+├── index.html              # Main HTML file
+├── styles.css              # Styling
+├── app.js                  # JavaScript functionality
+├── secure-keys.js          # Secure key management module (AES-256-GCM encryption)
+├── generate_site.py         # Python site generator script
+├── proxy-server-example.js  # Example CORS proxy server (Node.js)
+├── PROXY_SETUP.md          # CORS proxy setup guide
+├── SECURITY.md             # Detailed security documentation
+└── README.md               # This file
 ```
 
 ## API Calls & Security
@@ -118,38 +103,255 @@ This script can be extended to programmatically generate test scenarios or updat
 - ✅ Perfect for testing UI flows and understanding integration patterns
 - ⚠️ Responses are simulated and won't reflect actual API behavior
 
-### Enabling Real API Calls
-To make actual API calls to Affirm's API:
+### Secure Key Management System
+
+This tool implements a **highly secure key management system** using industry-standard encryption. Keys are never stored in plain text and are only decrypted in browser memory during active sessions.
+
+#### 🔐 Encryption Architecture
+
+**Algorithm: AES-256-GCM**
+- Advanced Encryption Standard with 256-bit keys
+- Galois/Counter Mode (GCM) provides authenticated encryption
+- Prevents tampering and ensures data integrity
+
+**Key Derivation: PBKDF2**
+- Password-Based Key Derivation Function 2
+- 100,000 iterations with SHA-256 hashing
+- Converts your passphrase into a strong encryption key
+- Unique 16-byte random salt per encryption
+
+**Initialization Vector (IV)**
+- 12-byte cryptographically secure random IV per encryption
+- Required for GCM mode security
+- Ensures same plaintext produces different ciphertext
+
+#### 🔐 Security Features
+
+1. **Encryption at Rest**: Keys are encrypted using AES-256-GCM before storage
+2. **PBKDF2 Key Derivation**: Passphrase processed through PBKDF2 with 100,000 iterations
+3. **Random Salt & IV**: Each encryption uses unique random salt and initialization vector
+4. **Memory-Only Decryption**: Keys are only decrypted in browser memory, never stored in plain text
+5. **Auto-Expiration**: Decrypted keys automatically expire after 30 minutes of inactivity
+6. **Session Management**: Active session timer with ability to extend
+7. **Passphrase Protection**: Passphrase never stored - you must remember it
+8. **Input Field Security**: Keys cleared from input fields immediately after encryption
+
+#### 🔒 How It Works
+
+1. **Storing Keys**:
+   - Enter your Public API Key and Private API Key
+   - Create a strong passphrase (minimum 8 characters)
+   - Keys are encrypted with your passphrase using AES-256-GCM
+   - Only the encrypted data is stored in localStorage
+   - Original keys are immediately cleared from input fields
+
+2. **Unlocking Keys**:
+   - When you need to use the keys, enter your passphrase
+   - Keys are decrypted in memory only (never persisted)
+   - Session remains active for 30 minutes
+   - Keys automatically clear from memory when session expires
+
+3. **Security Features**:
+   - ✅ Keys never stored in plain text
+   - ✅ Passphrase never stored (you must remember it)
+   - ✅ Auto-expiration prevents long-term exposure
+   - ✅ Memory-only decryption (cleared on page refresh)
+   - ✅ Session extension available
+   - ✅ Manual key clearing option
+   - ✅ Passphrase trimming prevents whitespace-related failures
+   - ✅ UI automatically updates when session expires
+
+#### 📋 Using Secure Key Management
 
 1. Go to the **API Testing Tools** section
-2. Open **Environment Configuration**
-3. Check the **"Enable Real API Calls"** checkbox
-4. Enter your **Public API Key** and **Private API Key**
-5. Select your environment (Sandbox or Production)
-6. Click **Save Configuration**
+2. Open **Secure Key Management**
+3. Enter your **Public API Key** and **Private API Key**
+4. Create/enter your **Encryption Passphrase** (remember this!)
+5. Select your **Environment** (Sandbox/Production)
+6. Check **"Enable Real API Calls"** if needed
+7. Click **"Save & Encrypt Keys"**
+
+**To unlock later:**
+- Enter your passphrase in the unlock section
+- Keys will be decrypted in memory for 30 minutes
+- Use "Extend" button to add more time
+
+### 🔒 Security Protections & Limitations
+
+#### What This System Protects Against
+
+✅ **LocalStorage Theft**: Encrypted data is useless without the passphrase  
+✅ **Memory Dumps**: Keys auto-expire, reducing exposure window  
+✅ **Browser Extensions**: Encrypted storage prevents direct key access  
+✅ **Accidental Exposure**: Keys never stored in plain text  
+✅ **Long-Term Exposure**: Auto-expiration limits risk window  
+✅ **Whitespace Issues**: Passphrase trimming prevents decryption failures  
+
+#### What This System Cannot Protect Against
+
+⚠️ **Browser DevTools**: Network requests show Authorization header (Base64 encoded)  
+⚠️ **Malicious Extensions**: Extensions with network access can intercept requests  
+⚠️ **Memory Inspection**: Advanced tools could read decrypted keys from memory  
+⚠️ **XSS Attacks**: If site is compromised, attacker could access decrypted keys  
+⚠️ **Physical Access**: If device is compromised, keys in memory could be extracted  
 
 ### ⚠️ Security Warnings
 
-**CRITICAL:** Making API calls from client-side JavaScript has serious security implications:
+**CRITICAL:** Even with encryption, making API calls from client-side JavaScript has security implications:
 
-1. **Private Key Exposure**: Your private API key will be visible in:
-   - Browser DevTools (Network tab)
-   - Browser JavaScript console
-   - Any browser extensions
-   - Server logs (if proxied)
+1. **Private Key Exposure During API Calls**: When making actual API calls, your private key will be visible in:
+   - Browser DevTools (Network tab) - in the Authorization header
+   - Browser JavaScript console (if inspected)
+   - Any browser extensions with network access
+   - Server logs (if requests are proxied)
 
 2. **Best Practices**:
    - ✅ **Only use in Sandbox environment** for testing
    - ✅ **Never commit credentials** to version control
-   - ✅ **Use environment variables** if running locally
+   - ✅ **Use strong, unique passphrases** (12+ characters recommended)
+   - ✅ **Clear keys from memory** when done testing
    - ✅ **Consider a backend proxy** for production use
+   - ✅ **Use on trusted devices only** - not shared/public computers
    - ❌ **Never use in production** without a secure backend
+   - ❌ **Don't share your passphrase** - it's the key to your encrypted data
+   - ❌ **Don't reuse passphrases** from other services
 
-3. **Recommended Architecture**:
+3. **Recommended Architecture for Production**:
    ```
    Browser → Your Backend Server → Affirm API
    ```
-   This keeps your private key secure on the server side.
+   This keeps your private key secure on the server side where it can't be accessed by browser tools.
+
+### 🔄 CORS Workarounds
+
+Since Affirm's API doesn't allow direct browser requests due to CORS restrictions, here are practical solutions:
+
+#### Option 1: CORS Proxy (For Testing Only)
+
+**⚠️ Security Warning**: Public CORS proxies are NOT secure for production use. They can see your API keys and data.
+
+1. **Configure in Secure Key Management**:
+   - Enter proxy URL in "CORS Proxy" field
+   - Example: `http://localhost:3000/proxy/` (for local proxy)
+   - API calls will be routed through the proxy
+
+2. **Quick Setup**:
+   - See [PROXY_SETUP.md](PROXY_SETUP.md) for detailed setup instructions
+   - Use `proxy-server-example.js` as a starting point for your own proxy
+   - Or use a public proxy service (testing only):
+     - `https://cors-anywhere.herokuapp.com/` (may require temporary access)
+     - `https://api.allorigins.win/raw?url=`
+     - `https://corsproxy.io/?`
+
+#### Option 2: Your Own Backend Proxy (Recommended)
+
+Create a simple backend server that proxies requests:
+
+**Node.js Example**:
+```javascript
+// server.js
+const express = require('express');
+const cors = require('cors');
+const fetch = require('node-fetch');
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+app.post('/api/proxy/*', async (req, res) => {
+  const targetUrl = req.url.replace('/api/proxy/', 'https://');
+  const response = await fetch(targetUrl, {
+    method: req.method,
+    headers: {
+      'Authorization': req.headers.authorization,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(req.body)
+  });
+  const data = await response.json();
+  res.json(data);
+});
+
+app.listen(3000);
+```
+
+Then set CORS Proxy to: `http://localhost:3000/api/proxy/`
+
+#### Option 3: Serverless Functions
+
+**Vercel Function** (`api/proxy.js`):
+```javascript
+export default async function handler(req, res) {
+  const { url, method, body, auth } = JSON.parse(req.body);
+  
+  const response = await fetch(url, {
+    method,
+    headers: {
+      'Authorization': auth,
+      'Content-Type': 'application/json'
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  
+  const data = await response.json();
+  res.json(data);
+}
+```
+
+**Netlify Function** (`netlify/functions/proxy.js`):
+```javascript
+exports.handler = async (event, context) => {
+  const { url, method, body, auth } = JSON.parse(event.body);
+  
+  const response = await fetch(url, {
+    method,
+    headers: {
+      'Authorization': auth,
+      'Content-Type': 'application/json'
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  
+  const data = await response.json();
+  return { statusCode: 200, body: JSON.stringify(data) };
+};
+```
+
+#### Option 4: Browser Extension (Not Recommended)
+
+Some browser extensions can disable CORS, but:
+- ❌ Not practical for end users
+- ❌ Security risk
+- ❌ Not a production solution
+
+#### Best Practice
+
+For production use, **always use a backend server** or **serverless function** that you control. This:
+- ✅ Keeps API keys secure on the server
+- ✅ Avoids CORS issues
+- ✅ Provides better security
+- ✅ Allows request logging and monitoring
+
+### 📊 Technical Implementation
+
+**Web Crypto API**: Uses browser's native Web Crypto API for all cryptographic operations
+- `crypto.subtle.deriveKey()` - PBKDF2 key derivation
+- `crypto.subtle.encrypt()` - AES-GCM encryption
+- `crypto.subtle.decrypt()` - AES-GCM decryption
+- `crypto.getRandomValues()` - Cryptographically secure random generation
+
+**Browser Compatibility**: Full support in Chrome/Edge (37+), Firefox (34+), Safari (11+), Opera (24+)
+
+**Storage Format**: Encrypted data stored in localStorage with structure:
+```json
+{
+  "encrypted": "base64_encoded_data",
+  "environment": "sandbox|production",
+  "storedAt": timestamp
+}
+```
+
+For detailed security documentation, see [SECURITY.md](SECURITY.md).
 
 ### Notes
 
