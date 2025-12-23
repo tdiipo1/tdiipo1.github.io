@@ -861,7 +861,11 @@ async function testCardFinalization() {
         return;
     }
 
-    const response = await makeAPICall(`/cards/${cardId}/finalize`, 'POST');
+    // Generate idempotency key for card finalization (POST requests should use idempotency)
+    const idempotencyKey = `finalize_${cardId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Cards API uses /api/v2, makeAPICall will handle it correctly
+    const response = await makeAPICall(`/cards/${cardId}/finalize`, 'POST', null, idempotencyKey);
     
     if (response.success) {
         displayResult('card-finalize-result', 
@@ -880,7 +884,11 @@ async function testCardCancellation() {
         return;
     }
 
-    const response = await makeAPICall(`/cards/${cardId}/cancel`, 'POST');
+    // Generate idempotency key for card cancellation (POST requests should use idempotency)
+    const idempotencyKey = `cancel_${cardId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Cards API uses /api/v2, makeAPICall will handle it correctly
+    const response = await makeAPICall(`/cards/${cardId}/cancel`, 'POST', null, idempotencyKey);
     
     if (response.success) {
         displayResult('card-cancel-result', 
@@ -1033,6 +1041,9 @@ async function testUpdateTransaction() {
         : 'https://api.affirm.com/api/v1';
     const url = `${baseUrl}/transactions/${transactionId}`;
     
+    // Generate idempotency key for update (POST requests that modify data should use idempotency)
+    const idempotencyKey = `update_${transactionId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
     // Apply CORS proxy if configured
     let finalUrl = url;
     if (CONFIG.corsProxy) {
@@ -1057,7 +1068,8 @@ async function testUpdateTransaction() {
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'Authorization': `Basic ${btoa(keys.publicKey + ':' + keys.privateKey)}`
+            'Authorization': `Basic ${btoa(keys.publicKey + ':' + keys.privateKey)}`,
+            'Idempotency-Key': idempotencyKey
         },
         body: Object.keys(updateData).length > 0 ? JSON.stringify(updateData) : undefined
     };

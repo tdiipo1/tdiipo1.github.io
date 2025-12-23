@@ -54,14 +54,33 @@ app.all('/proxy/*', async (req, res) => {
 
     console.log(`[${new Date().toISOString()}] ${req.method} ${targetUrl}`);
 
+    // Forward all relevant headers to Affirm API
+    // Note: Express lowercases all header names, so we check lowercase versions
+    const forwardHeaders = {
+      'Authorization': req.headers.authorization || '',
+      'Content-Type': req.headers['content-type'] || 'application/json',
+      'Accept': 'application/json'
+    };
+    
+    // Forward Idempotency-Key if present (required for transaction operations)
+    // Express lowercases headers, so it will be 'idempotency-key'
+    const idempotencyKey = req.headers['idempotency-key'];
+    if (idempotencyKey) {
+      forwardHeaders['Idempotency-Key'] = idempotencyKey;
+      console.log(`[Proxy] Forwarding Idempotency-Key: ${idempotencyKey.substring(0, 30)}...`);
+    } else {
+      console.log(`[Proxy] Warning: No Idempotency-Key header found in request`);
+    }
+    
+    // Log all incoming headers for debugging
+    console.log(`[Proxy] Incoming headers:`, Object.keys(req.headers).filter(h => 
+      h.includes('authorization') || h.includes('idempotency') || h.includes('content-type')
+    ));
+
     // Forward the request to Affirm API
     const response = await fetch(targetUrl, {
       method: req.method,
-      headers: {
-        'Authorization': req.headers.authorization || '',
-        'Content-Type': req.headers['content-type'] || 'application/json',
-        'Accept': 'application/json'
-      },
+      headers: forwardHeaders,
       body: req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'DELETE' 
         ? (typeof req.body === 'string' ? req.body : JSON.stringify(req.body))
         : undefined
