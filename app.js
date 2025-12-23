@@ -83,7 +83,8 @@ function formatJSON(obj) {
 // Set CONFIG.useRealAPI = true and unlock encrypted keys to make real API calls.
 // Keys are securely encrypted and only decrypted in memory during active session.
 // Use CONFIG.corsProxy to bypass CORS restrictions (see README for options).
-async function makeAPICall(endpoint, method = 'GET', body = null) {
+// idempotencyKey: Optional unique key for idempotent requests (e.g., transaction authorization)
+async function makeAPICall(endpoint, method = 'GET', body = null, idempotencyKey = null) {
     const config = CONFIG[CONFIG.currentEnv];
     let url = `${config.baseUrl}${endpoint}`;
     
@@ -124,6 +125,11 @@ async function makeAPICall(endpoint, method = 'GET', body = null) {
             'Authorization': `Basic ${btoa(keys.publicKey + ':' + keys.privateKey)}`
         }
     };
+    
+    // Add idempotency key header if provided (required for transaction authorization)
+    if (idempotencyKey) {
+        options.headers['Idempotency-Key'] = idempotencyKey;
+    }
 
     if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
         options.body = JSON.stringify(body);
@@ -408,21 +414,30 @@ async function testTransactionAuth() {
     }
 
     // According to Affirm docs: https://docs.affirm.com/developers/reference/authorize_transaction
-    // Only checkout_token and order_id are required
+    // Only checkout_token and order_id are required in the body
+    // Idempotency-Key header is required to prevent duplicate transactions
+    const finalOrderId = orderId || 'ORDER_' + Date.now();
     const authData = {
         checkout_token: checkoutToken,
-        order_id: orderId || 'ORDER_' + Date.now()
+        order_id: finalOrderId
     };
+    
+    // Generate a unique idempotency key for this authorization request
+    // Using order_id + timestamp ensures uniqueness while allowing retries with same order_id
+    const idempotencyKey = `auth_${finalOrderId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    const response = await makeAPICall('/transactions', 'POST', authData);
+    // Note: According to Affirm docs, authorize transaction uses /api/v1/transactions
+    // But we're using /api/v2 baseUrl, so we'll try /transactions first
+    // If it fails, we may need to use the full v1 endpoint
+    const response = await makeAPICall('/transactions', 'POST', authData, idempotencyKey);
     
     if (response.success) {
         displayResult('transaction-auth-result', 
-            `Transaction authorized successfully!\n\nOrder ID: ${authData.order_id}\nTransaction ID: ${response.data.id || 'N/A'}\n\n${formatJSON(response.data)}\n\nStore transaction_id for future operations`,
+            `Transaction authorized successfully!\n\nOrder ID: ${finalOrderId}\nTransaction ID: ${response.data.id || 'N/A'}\n\n${formatJSON(response.data)}\n\nStore transaction_id for future operations`,
             'success');
     } else {
         displayResult('transaction-auth-result', 
-            `Error: ${response.error}\n\nDebug Info:\n- Endpoint used: /transactions\n- Order ID: ${authData.order_id}\n- Checkout Token: ${checkoutToken.substring(0, 10)}...\n- Check browser console for detailed request info`,
+            `Error: ${response.error}\n\nDebug Info:\n- Endpoint used: /transactions\n- Order ID: ${finalOrderId}\n- Idempotency Key: ${idempotencyKey.substring(0, 30)}...\n- Checkout Token: ${checkoutToken.substring(0, 10)}...\n- Check browser console for detailed request info`,
             'error');
     }
 }
