@@ -199,6 +199,11 @@ async function simulateAPICall(url, method, body) {
     
     // Return mock response based on endpoint
     const mockResponses = {
+        '/checkout/direct': {
+            checkout_id: 'PO4D77JZ6W5X123T',
+            redirect_url: 'https://sandbox.affirm.com/products/checkout?public_api_key=TEST&checkout_ari=PO4D77JZ6W5X123T',
+            _note: 'This is a MOCK response. Enable real API calls in configuration to make actual requests.'
+        },
         '/checkouts': {
             id: 'checkout_' + Date.now(),
             checkout_token: 'token_' + Math.random().toString(36).substr(2, 9),
@@ -291,6 +296,7 @@ async function testCheckoutInit() {
     
     const checkoutData = {
         merchant: {
+            use_vcn: 'false',  // Required for Direct Checkout API
             user_confirmation_url: window.location.origin + '/confirm',
             user_cancel_url: window.location.origin + '/cancel'
         },
@@ -328,11 +334,12 @@ async function testCheckoutInit() {
         }
     };
 
-    const response = await makeAPICall('/checkouts', 'POST', checkoutData);
+    // Use the correct endpoint: /api/v2/checkout/direct (not /checkouts)
+    const response = await makeAPICall('/checkout/direct', 'POST', checkoutData);
     
     if (response.success) {
         displayResult('checkout-init-result', 
-            `Checkout initialized successfully!\n\n${formatJSON(response.data)}\n\nNext steps:\n1. Open checkout using: affirm.checkout.open()\n2. Use checkout_token to authorize transaction`,
+            `Checkout initialized successfully!\n\n${formatJSON(response.data)}\n\nNext steps:\n1. Use checkout_id (${response.data.checkout_id || 'N/A'}) to launch the modal\n2. Call affirm.checkout() with checkoutAri and mode: "modal"\n3. Use affirm.checkout.open() to display the modal`,
             'success');
     } else {
         displayResult('checkout-init-result', `Error: ${response.error}`, 'error');
