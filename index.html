@@ -3,6 +3,9 @@
     <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Affirm Integration Testing Suite</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,6 +38,144 @@
             </nav>
 
     <main class="container">
+        <!-- API Testing Section - Moved to top for easy access -->
+        <section id="api-testing" class="test-section">
+            <h2>API Testing Tools</h2>
+            <p class="section-description">Direct API testing interface for Merchant API endpoints</p>
+            
+            <div class="test-cards">
+                <div class="test-card">
+                    <h3>API Request Builder</h3>
+                    <p>Build and test API requests to Affirm endpoints</p>
+                    <div class="test-controls">
+                        <label>Endpoint: 
+                            <select id="api-endpoint" onchange="updateAPIRequestBody()">
+                                <option value="/checkout/direct">POST /checkout/direct</option>
+                                <option value="/transactions">POST /transactions</option>
+                                <option value="/transactions/{id}">GET /transactions/{id}</option>
+                                <option value="/transactions/{id}/capture">POST /transactions/{id}/capture</option>
+                                <option value="/transactions/{id}/void">POST /transactions/{id}/void</option>
+                                <option value="/transactions/{id}/refund">POST /transactions/{id}/refund</option>
+                                <option value="/cards/{id}">GET /cards/{id}</option>
+                                <option value="/cards/{id}/finalize">POST /cards/{id}/finalize</option>
+                                <option value="/cards/{id}/cancel">POST /cards/{id}/cancel</option>
+                            </select>
+                        </label>
+                        <label>Method: 
+                            <select id="api-method" onchange="updateAPIRequestBody()">
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="PATCH">PATCH</option>
+                                <option value="DELETE">DELETE</option>
+                            </select>
+                        </label>
+                        <label>Request Body (JSON): <textarea id="api-body" rows="10" placeholder='{"key": "value"}'></textarea></label>
+                        <label>API Key: <input type="text" id="api-key" placeholder="Enter API key (optional)"></label>
+                        <button class="btn btn-primary" onclick="testAPIRequest()">Send API Request</button>
+                    </div>
+                    <div id="api-request-result" class="test-result"></div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Secure Key Management</h3>
+                    <p>Securely store and manage your API keys with encryption</p>
+                    
+                    <!-- Unlock Section (shown when keys are stored but locked) -->
+                    <div id="unlock-section" style="display: none;">
+                        <div class="test-controls">
+                            <div style="background: #d1ecf1; border: 1px solid #bee5eb; border-radius: 4px; padding: 1rem; margin-bottom: 1rem;">
+                                <strong>🔒 Keys are encrypted and stored securely.</strong><br>
+                                Enter your passphrase to unlock them for this session.
+                            </div>
+                            
+                            <!-- Proxy Server Section (also shown in unlock section) -->
+                            <div style="background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 4px; padding: 1rem; margin: 1rem 0;">
+                                <strong>🚀 Start Local Proxy Server</strong>
+                                <p style="margin: 0.5rem 0; font-size: 0.9rem;">Run a local CORS proxy server to enable API calls from the browser.</p>
+                                <button class="btn btn-secondary" onclick="showProxyInstructions('unlock')" style="margin-right: 0.5rem;">Show Instructions</button>
+                                <button class="btn btn-secondary" onclick="copyProxyCommand()">Copy Setup Command</button>
+                                <button class="btn btn-secondary" onclick="testProxyConnection()" style="margin-left: 0.5rem;">Test Proxy</button>
+                                <div id="proxy-instructions-unlock" style="display: none; margin-top: 1rem; padding: 0.75rem; background: white; border-radius: 4px; font-size: 0.85rem;">
+                                    <strong>Quick Start:</strong><br>
+                                    <code style="background: #f5f5f5; padding: 0.25rem 0.5rem; border-radius: 3px; display: block; margin: 0.5rem 0;">npm install && npm start</code>
+                                    <p style="margin: 0.5rem 0 0 0;">Or use the startup script: <code style="background: #f5f5f5; padding: 0.25rem 0.5rem; border-radius: 3px;">./start-proxy.sh</code></p>
+                                </div>
+                            </div>
+                            
+                            <label>Passphrase: 
+                                <input type="password" id="unlock-passphrase" placeholder="Enter your passphrase" autocomplete="off">
+                            </label>
+                            <button class="btn btn-primary" onclick="unlockKeys()">Unlock Keys</button>
+                            <button class="btn btn-danger" onclick="forgetKeys()" style="margin-top: 0.5rem;">Forget All Keys</button>
+                        </div>
+                    </div>
+
+                    <!-- Key Entry Section (shown when no keys or when unlocked) -->
+                    <div id="key-entry-section">
+                        <div class="test-controls">
+                            <label>Environment: 
+                                <select id="api-environment">
+                                    <option value="sandbox">Sandbox</option>
+                                    <option value="production">Production</option>
+                                </select>
+                            </label>
+                            <label style="flex-direction: row; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" id="use-real-api" style="width: auto; margin: 0;">
+                                <span style="font-weight: 600; color: #dc3545;">Enable Real API Calls</span>
+                            </label>
+                            
+                            <!-- Session Status -->
+                            <div id="session-status" style="display: none; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; padding: 0.75rem; margin: 0.5rem 0; font-size: 0.85rem;">
+                                <strong>✅ Session Active:</strong> <span id="session-time">--</span> minutes remaining
+                                <button class="btn btn-secondary" onclick="extendSession()" style="margin-left: 1rem; padding: 0.25rem 0.75rem; font-size: 0.85rem;">Extend</button>
+                            </div>
+
+                            <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 0.75rem; margin: 0.5rem 0; font-size: 0.85rem;">
+                                <strong>🔐 Secure Storage:</strong> Keys are encrypted with AES-256-GCM using a passphrase you provide. 
+                                Keys are only decrypted in memory and auto-expire after 30 minutes of inactivity.
+                            </div>
+                            
+                            <label>Public API Key: 
+                                <input type="text" id="public-api-key" placeholder="Public API key" autocomplete="off">
+                            </label>
+                            <label>Private API Key: 
+                                <input type="password" id="private-api-key" placeholder="Private API key" autocomplete="off">
+                            </label>
+                            <label>Encryption Passphrase: 
+                                <input type="password" id="encryption-passphrase" placeholder="Create/enter passphrase (min 8 chars)" autocomplete="off">
+                                <small style="color: #6c757d; margin-top: 0.25rem; display: block;">
+                                    This passphrase encrypts your keys. You'll need it to unlock them later.
+                                </small>
+                            </label>
+                            <label>CORS Proxy (Optional): 
+                                <input type="text" id="cors-proxy" placeholder="http://localhost:3000/proxy/ (leave empty to attempt direct calls)" autocomplete="off">
+                                <small style="color: #6c757d; margin-top: 0.25rem; display: block;">
+                                    ⚠️ Required to bypass CORS restrictions. Use the button below to start a local proxy server.
+                                </small>
+                            </label>
+                            <div style="background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 4px; padding: 1rem; margin: 1rem 0;">
+                                <strong>🚀 Start Local Proxy Server</strong>
+                                <p style="margin: 0.5rem 0; font-size: 0.9rem;">Run a local CORS proxy server to enable API calls from the browser.</p>
+                                <button class="btn btn-secondary" onclick="showProxyInstructions('main')" style="margin-right: 0.5rem;">Show Instructions</button>
+                                <button class="btn btn-secondary" onclick="copyProxyCommand()">Copy Setup Command</button>
+                                <button class="btn btn-secondary" onclick="testProxyConnection()" style="margin-left: 0.5rem;">Test Proxy</button>
+                                <div id="proxy-instructions" style="display: none; margin-top: 1rem; padding: 0.75rem; background: white; border-radius: 4px; font-size: 0.85rem;">
+                                    <strong>Quick Start:</strong><br>
+                                    <code style="background: #f5f5f5; padding: 0.25rem 0.5rem; border-radius: 3px; display: block; margin: 0.5rem 0;">npm install && npm start</code>
+                                    <p style="margin: 0.5rem 0 0 0;">Or use the startup script: <code style="background: #f5f5f5; padding: 0.25rem 0.5rem; border-radius: 3px;">./start-proxy.sh</code></p>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="saveAPIConfigSecure()">Save & Encrypt Keys</button>
+                            <button class="btn btn-danger" onclick="clearKeysFromMemory()" style="margin-top: 0.5rem;">Clear Keys from Memory</button>
+                        </div>
+                    </div>
+                    
+                    <div id="api-config-result" class="test-result"></div>
+                </div>
+            </div>
+        </section>
+        
         <!-- Promotional Messaging Section -->
         <section id="promotional-messaging" class="test-section">
             <h2>Promotional Messaging Tests</h2>
@@ -95,6 +236,8 @@
                     <p>Test creating and initializing a Direct API checkout</p>
                     <div class="test-controls">
                         <label>Order Amount: $<input type="number" id="checkout-amount" value="199.99" min="0" step="0.01"></label>
+                        <label>Tax Amount: $<input type="number" id="checkout-tax-amount" value="19.99" min="0" step="0.01"></label>
+                        <label>Order ID: <input type="text" id="checkout-order-id" placeholder="Auto-generated if empty"></label>
                         <label>Merchant Name: <input type="text" id="merchant-name" value="Test Merchant"></label>
                         <label>Checkout Type: 
                             <select id="checkout-type">
@@ -102,6 +245,49 @@
                                 <option value="redirect">Redirect</option>
                             </select>
                         </label>
+                        
+                        <!-- Item Details (Collapsible) -->
+                        <details style="margin: 1rem 0; border: 1px solid #ddd; border-radius: 4px; padding: 0.5rem;">
+                            <summary style="cursor: pointer; font-weight: 600; padding: 0.5rem;">Item Details (Click to expand/collapse)</summary>
+                            <div style="padding: 0.5rem; margin-top: 0.5rem;">
+                                <label>Item Name: <input type="text" id="checkout-item-name" value="Test Item"></label>
+                                <label>SKU: <input type="text" id="checkout-item-sku" value="TEST-001"></label>
+                                <label>Quantity: <input type="number" id="checkout-item-qty" value="1" min="1"></label>
+                                <label>Item Image URL: <input type="text" id="checkout-item-image-url" placeholder="Optional"></label>
+                                <label>Item URL: <input type="text" id="checkout-item-url" placeholder="Optional"></label>
+                            </div>
+                        </details>
+                        
+                        <!-- Shipping Address (Collapsible) -->
+                        <details style="margin: 1rem 0; border: 1px solid #ddd; border-radius: 4px; padding: 0.5rem;">
+                            <summary style="cursor: pointer; font-weight: 600; padding: 0.5rem;">Shipping Address (Click to expand/collapse)</summary>
+                            <div style="padding: 0.5rem; margin-top: 0.5rem;">
+                                <label>First Name: <input type="text" id="shipping-first-name" value="AITS"></label>
+                                <label>Last Name: <input type="text" id="shipping-last-name" value="User"></label>
+                                <label>Address Line 1: <input type="text" id="shipping-line1" value="123 Test St"></label>
+                                <label>Address Line 2: <input type="text" id="shipping-line2" value="Apt 123"></label>
+                                <label>City: <input type="text" id="shipping-city" value="San Francisco"></label>
+                                <label>State: <input type="text" id="shipping-state" value="CA"></label>
+                                <label>Zipcode: <input type="text" id="shipping-zipcode" value="94105"></label>
+                                <label>Country: <input type="text" id="shipping-country" value="USA"></label>
+                            </div>
+                        </details>
+                        
+                        <!-- Billing Address (Collapsible) -->
+                        <details style="margin: 1rem 0; border: 1px solid #ddd; border-radius: 4px; padding: 0.5rem;">
+                            <summary style="cursor: pointer; font-weight: 600; padding: 0.5rem;">Billing Address (Click to expand/collapse)</summary>
+                            <div style="padding: 0.5rem; margin-top: 0.5rem;">
+                                <label>First Name: <input type="text" id="billing-first-name" value="AITS"></label>
+                                <label>Last Name: <input type="text" id="billing-last-name" value="User"></label>
+                                <label>Address Line 1: <input type="text" id="billing-line1" value="123 Test St"></label>
+                                <label>Address Line 2: <input type="text" id="billing-line2" value="Apt 123"></label>
+                                <label>City: <input type="text" id="billing-city" value="San Francisco"></label>
+                                <label>State: <input type="text" id="billing-state" value="CA"></label>
+                                <label>Zipcode: <input type="text" id="billing-zipcode" value="94105"></label>
+                                <label>Country: <input type="text" id="billing-country" value="USA"></label>
+                            </div>
+                        </details>
+                        
                         <button class="btn btn-primary" onclick="testCheckoutInit()">Initialize Checkout</button>
                     </div>
                     <div id="checkout-init-result" class="test-result"></div>
@@ -329,144 +515,6 @@
                 </div>
 		</div>
 		</section>
-		
-        <!-- API Testing Section -->
-        <section id="api-testing" class="test-section">
-            <h2>API Testing Tools</h2>
-            <p class="section-description">Direct API testing interface for Merchant API endpoints</p>
-            
-            <div class="test-cards">
-                <div class="test-card">
-                    <h3>API Request Builder</h3>
-                    <p>Build and test API requests to Affirm endpoints</p>
-                    <div class="test-controls">
-                        <label>Endpoint: 
-                            <select id="api-endpoint">
-                                <option value="/checkout/direct">POST /checkout/direct</option>
-                                <option value="/transactions">POST /transactions</option>
-                                <option value="/transactions/{id}">GET /transactions/{id}</option>
-                                <option value="/transactions/{id}/capture">POST /transactions/{id}/capture</option>
-                                <option value="/transactions/{id}/void">POST /transactions/{id}/void</option>
-                                <option value="/transactions/{id}/refund">POST /transactions/{id}/refund</option>
-                                <option value="/cards/{id}">GET /cards/{id}</option>
-                                <option value="/cards/{id}/finalize">POST /cards/{id}/finalize</option>
-                                <option value="/cards/{id}/cancel">POST /cards/{id}/cancel</option>
-                            </select>
-                        </label>
-                        <label>Method: 
-                            <select id="api-method">
-                                <option value="GET">GET</option>
-                                <option value="POST">POST</option>
-                                <option value="PUT">PUT</option>
-                                <option value="PATCH">PATCH</option>
-                                <option value="DELETE">DELETE</option>
-                            </select>
-                        </label>
-                        <label>Request Body (JSON): <textarea id="api-body" rows="6" placeholder='{"key": "value"}'></textarea></label>
-                        <label>API Key: <input type="text" id="api-key" placeholder="Enter API key (optional)"></label>
-                        <button class="btn btn-primary" onclick="testAPIRequest()">Send API Request</button>
-                    </div>
-                    <div id="api-request-result" class="test-result"></div>
-                </div>
-
-                <div class="test-card">
-                    <h3>Secure Key Management</h3>
-                    <p>Securely store and manage your API keys with encryption</p>
-                    
-                    <!-- Unlock Section (shown when keys are stored but locked) -->
-                    <div id="unlock-section" style="display: none;">
-                        <div class="test-controls">
-                            <div style="background: #d1ecf1; border: 1px solid #bee5eb; border-radius: 4px; padding: 1rem; margin-bottom: 1rem;">
-                                <strong>🔒 Keys are encrypted and stored securely.</strong><br>
-                                Enter your passphrase to unlock them for this session.
-                            </div>
-                            
-                            <!-- Proxy Server Section (also shown in unlock section) -->
-                            <div style="background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 4px; padding: 1rem; margin: 1rem 0;">
-                                <strong>🚀 Start Local Proxy Server</strong>
-                                <p style="margin: 0.5rem 0; font-size: 0.9rem;">Run a local CORS proxy server to enable API calls from the browser.</p>
-                                <button class="btn btn-secondary" onclick="showProxyInstructions('unlock')" style="margin-right: 0.5rem;">Show Instructions</button>
-                                <button class="btn btn-secondary" onclick="copyProxyCommand()">Copy Setup Command</button>
-                                <button class="btn btn-secondary" onclick="testProxyConnection()" style="margin-left: 0.5rem;">Test Proxy</button>
-                                <div id="proxy-instructions-unlock" style="display: none; margin-top: 1rem; padding: 0.75rem; background: white; border-radius: 4px; font-size: 0.85rem;">
-                                    <strong>Quick Start:</strong><br>
-                                    <code style="background: #f5f5f5; padding: 0.25rem 0.5rem; border-radius: 3px; display: block; margin: 0.5rem 0;">npm install && npm start</code>
-                                    <p style="margin: 0.5rem 0 0 0;">Or use the startup script: <code style="background: #f5f5f5; padding: 0.25rem 0.5rem; border-radius: 3px;">./start-proxy.sh</code></p>
-                                </div>
-                            </div>
-                            
-                            <label>Passphrase: 
-                                <input type="password" id="unlock-passphrase" placeholder="Enter your passphrase" autocomplete="off">
-                            </label>
-                            <button class="btn btn-primary" onclick="unlockKeys()">Unlock Keys</button>
-                            <button class="btn btn-danger" onclick="forgetKeys()" style="margin-top: 0.5rem;">Forget All Keys</button>
-                        </div>
-                    </div>
-
-                    <!-- Key Entry Section (shown when no keys or when unlocked) -->
-                    <div id="key-entry-section">
-                        <div class="test-controls">
-                            <label>Environment: 
-                                <select id="api-environment">
-                                    <option value="sandbox">Sandbox</option>
-                                    <option value="production">Production</option>
-                                </select>
-                            </label>
-                            <label style="flex-direction: row; align-items: center; gap: 0.5rem;">
-                                <input type="checkbox" id="use-real-api" style="width: auto; margin: 0;">
-                                <span style="font-weight: 600; color: #dc3545;">Enable Real API Calls</span>
-                            </label>
-                            
-                            <!-- Session Status -->
-                            <div id="session-status" style="display: none; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; padding: 0.75rem; margin: 0.5rem 0; font-size: 0.85rem;">
-                                <strong>✅ Session Active:</strong> <span id="session-time">--</span> minutes remaining
-                                <button class="btn btn-secondary" onclick="extendSession()" style="margin-left: 1rem; padding: 0.25rem 0.75rem; font-size: 0.85rem;">Extend</button>
-                            </div>
-
-                            <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 0.75rem; margin: 0.5rem 0; font-size: 0.85rem;">
-                                <strong>🔐 Secure Storage:</strong> Keys are encrypted with AES-256-GCM using a passphrase you provide. 
-                                Keys are only decrypted in memory and auto-expire after 30 minutes of inactivity.
-                            </div>
-                            
-                            <label>Public API Key: 
-                                <input type="text" id="public-api-key" placeholder="Public API key" autocomplete="off">
-                            </label>
-                            <label>Private API Key: 
-                                <input type="password" id="private-api-key" placeholder="Private API key" autocomplete="off">
-                            </label>
-                            <label>Encryption Passphrase: 
-                                <input type="password" id="encryption-passphrase" placeholder="Create/enter passphrase (min 8 chars)" autocomplete="off">
-                                <small style="color: #6c757d; margin-top: 0.25rem; display: block;">
-                                    This passphrase encrypts your keys. You'll need it to unlock them later.
-                                </small>
-                            </label>
-                            <label>CORS Proxy (Optional): 
-                                <input type="text" id="cors-proxy" placeholder="http://localhost:3000/proxy/ (leave empty to attempt direct calls)" autocomplete="off">
-                                <small style="color: #6c757d; margin-top: 0.25rem; display: block;">
-                                    ⚠️ Required to bypass CORS restrictions. Use the button below to start a local proxy server.
-                                </small>
-                            </label>
-                            <div style="background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 4px; padding: 1rem; margin: 1rem 0;">
-                                <strong>🚀 Start Local Proxy Server</strong>
-                                <p style="margin: 0.5rem 0; font-size: 0.9rem;">Run a local CORS proxy server to enable API calls from the browser.</p>
-                                <button class="btn btn-secondary" onclick="showProxyInstructions('main')" style="margin-right: 0.5rem;">Show Instructions</button>
-                                <button class="btn btn-secondary" onclick="copyProxyCommand()">Copy Setup Command</button>
-                                <button class="btn btn-secondary" onclick="testProxyConnection()" style="margin-left: 0.5rem;">Test Proxy</button>
-                                <div id="proxy-instructions" style="display: none; margin-top: 1rem; padding: 0.75rem; background: white; border-radius: 4px; font-size: 0.85rem;">
-                                    <strong>Quick Start:</strong><br>
-                                    <code style="background: #f5f5f5; padding: 0.25rem 0.5rem; border-radius: 3px; display: block; margin: 0.5rem 0;">npm install && npm start</code>
-                                    <p style="margin: 0.5rem 0 0 0;">Or use the startup script: <code style="background: #f5f5f5; padding: 0.25rem 0.5rem; border-radius: 3px;">./start-proxy.sh</code></p>
-                                </div>
-                            </div>
-                            <button class="btn btn-primary" onclick="saveAPIConfigSecure()">Save & Encrypt Keys</button>
-                            <button class="btn btn-danger" onclick="clearKeysFromMemory()" style="margin-top: 0.5rem;">Clear Keys from Memory</button>
-                        </div>
-                    </div>
-                    
-                    <div id="api-config-result" class="test-result"></div>
-                </div>
-            </div>
-        </section>
 
         <!-- Resources Section -->
         <section id="resources" class="test-section">
@@ -503,8 +551,8 @@
             </div>
         </footer>
 
-    <script src="secure-keys.js?v=2"></script>
-    <script src="app.js?v=2"></script>
+    <script src="secure-keys.js?v=9"></script>
+    <script src="app.js?v=9"></script>
     </body>
 </html>
 

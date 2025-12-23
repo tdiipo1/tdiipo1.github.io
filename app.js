@@ -26,6 +26,8 @@ document.addEventListener('DOMContentLoaded', function() {
     setupSmoothScrolling();
     setupScrollToTop();
     setupSessionTimer();
+    // Initialize API Request Builder with prefilled body
+    updateAPIRequestBody();
 });
 
 // Smooth scrolling for navigation links
@@ -81,7 +83,8 @@ function formatJSON(obj) {
 // Set CONFIG.useRealAPI = true and unlock encrypted keys to make real API calls.
 // Keys are securely encrypted and only decrypted in memory during active session.
 // Use CONFIG.corsProxy to bypass CORS restrictions (see README for options).
-async function makeAPICall(endpoint, method = 'GET', body = null) {
+// idempotencyKey: Optional unique key for idempotent requests (e.g., transaction authorization)
+async function makeAPICall(endpoint, method = 'GET', body = null, idempotencyKey = null) {
     const config = CONFIG[CONFIG.currentEnv];
     let url = `${config.baseUrl}${endpoint}`;
     
@@ -122,6 +125,11 @@ async function makeAPICall(endpoint, method = 'GET', body = null) {
             'Authorization': `Basic ${btoa(keys.publicKey + ':' + keys.privateKey)}`
         }
     };
+    
+    // Add idempotency key header if provided (required for transaction authorization)
+    if (idempotencyKey) {
+        options.headers['Idempotency-Key'] = idempotencyKey;
+    }
 
     if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
         options.body = JSON.stringify(body);
@@ -304,56 +312,78 @@ async function testCheckoutInit() {
     const publicKey = keys ? keys.publicKey : 'YOUR_PUBLIC_KEY';
     
     // Generate a unique order ID for testing
-    const orderId = 'TEST_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const orderId = document.getElementById('checkout-order-id')?.value || 'TEST_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     
-    // Calculate tax amount (10% for testing, adjust as needed)
-    const taxAmount = Math.round(amount * 0.1 * 100) / 100;
+    // Convert amounts to cents (integers) - Affirm API requires amounts in smallest currency unit
+    const amountCents = Math.round(amount * 100);
+    const taxAmountCents = Math.round(parseFloat(document.getElementById('checkout-tax-amount')?.value || (amount * 0.1)) * 100);
+    
+    // Get shipping info from form or use defaults
+    const shippingFirstName = document.getElementById('shipping-first-name')?.value || 'AITS';
+    const shippingLastName = document.getElementById('shipping-last-name')?.value || 'User';
+    const shippingFullName = `${shippingFirstName} ${shippingLastName}`;
+    const shippingLine1 = document.getElementById('shipping-line1')?.value || '123 Test St';
+    const shippingLine2 = document.getElementById('shipping-line2')?.value || 'Apt 123';
+    const shippingCity = document.getElementById('shipping-city')?.value || 'San Francisco';
+    const shippingState = document.getElementById('shipping-state')?.value || 'CA';
+    const shippingZipcode = document.getElementById('shipping-zipcode')?.value || '94105';
+    const shippingCountry = document.getElementById('shipping-country')?.value || 'USA';
+    
+    // Get billing info from form or use defaults
+    const billingFirstName = document.getElementById('billing-first-name')?.value || 'AITS';
+    const billingLastName = document.getElementById('billing-last-name')?.value || 'User';
+    const billingLine1 = document.getElementById('billing-line1')?.value || '123 Test St';
+    const billingLine2 = document.getElementById('billing-line2')?.value || 'Apt 123';
+    const billingCity = document.getElementById('billing-city')?.value || 'San Francisco';
+    const billingState = document.getElementById('billing-state')?.value || 'CA';
+    const billingZipcode = document.getElementById('billing-zipcode')?.value || '94105';
+    const billingCountry = document.getElementById('billing-country')?.value || 'USA';
     
     const checkoutData = {
         merchant: {
             public_api_key: publicKey,  // Required: public API key must be in request body
-            user_confirmation_url: window.location.origin + '/confirm',
-            user_cancel_url: window.location.origin + '/cancel'
+            user_confirmation_url: 'https://tdiipo1.github.io/confirm',
+            user_cancel_url: 'https://tdiipo1.github.io/cancel'
         },
         items: [{
-            display_name: 'Test Item',
-            sku: 'TEST-001',
-            unit_price: amount,
-            qty: 1,
-            item_image_url: '',
-            item_url: window.location.href
+            display_name: document.getElementById('checkout-item-name')?.value || 'Test Item',
+            sku: document.getElementById('checkout-item-sku')?.value || 'TEST-001',
+            unit_price: amountCents,  // Convert to cents
+            qty: parseInt(document.getElementById('checkout-item-qty')?.value || '1'),
+            item_image_url: document.getElementById('checkout-item-image-url')?.value || '',
+            item_url: document.getElementById('checkout-item-url')?.value || window.location.href
         }],
         shipping: {
             name: {
-                first: 'John',
-                last: 'Doe',
-                full: 'John Doe'
+                first: shippingFirstName,
+                last: shippingLastName,
+                full: shippingFullName
             },
             address: {
-                line1: '123 Test St',
-                line2: 'Apt 123',
-                city: 'San Francisco',
-                state: 'CA',
-                zipcode: '94105',
-                country: 'USA'
+                line1: shippingLine1,
+                line2: shippingLine2,
+                city: shippingCity,
+                state: shippingState,
+                zipcode: shippingZipcode,
+                country: shippingCountry
             }
         },
         billing: {
             name: {
-                first: 'John',
-                last: 'Doe'
+                first: billingFirstName,
+                last: billingLastName
             },
             address: {
-                line1: '123 Test St',
-                line2: 'Apt 123',
-                city: 'San Francisco',
-                state: 'CA',
-                zipcode: '94105',
-                country: 'USA'
+                line1: billingLine1,
+                line2: billingLine2,
+                city: billingCity,
+                state: billingState,
+                zipcode: billingZipcode,
+                country: billingCountry
             }
         },
-        total: amount,
-        tax_amount: taxAmount,
+        total: amountCents,  // Convert to cents
+        tax_amount: taxAmountCents,  // Convert to cents
         order_id: orderId
     };
 
@@ -365,7 +395,7 @@ async function testCheckoutInit() {
     
     if (response.success) {
         displayResult('checkout-init-result', 
-            `Checkout initialized successfully!\n\n${formatJSON(response.data)}\n\nNext steps:\n1. Use checkout_id (${response.data.checkout_id || 'N/A'}) to launch the modal\n2. Call affirm.checkout() with checkoutAri and mode: "modal"\n3. Use affirm.checkout.open() to display the modal`,
+            `Checkout initialized successfully!\n\nOrder ID: ${orderId}\nCheckout ID: ${response.data.checkout_id || 'N/A'}\n\n${formatJSON(response.data)}\n\nNext steps:\n1. Use checkout_id (${response.data.checkout_id || 'N/A'}) to launch the modal\n2. Call affirm.checkout() with checkoutAri and mode: "modal"\n3. Use affirm.checkout.open() to display the modal`,
             'success');
     } else {
         displayResult('checkout-init-result', 
@@ -383,19 +413,83 @@ async function testTransactionAuth() {
         return;
     }
 
+    // According to Affirm docs: https://docs.affirm.com/developers/reference/authorize_transaction
+    // The request body requires:
+    // - transaction_id: The checkout token from the checkout initialization step
+    // - order_id: The merchant's order identifier
+    // The Idempotency-Key header is required to prevent duplicate transactions
+    const finalOrderId = orderId || 'ORDER_' + Date.now();
     const authData = {
-        checkout_token: checkoutToken,
-        order_id: orderId || 'ORDER_' + Date.now()
+        transaction_id: checkoutToken,  // Note: checkout_token from checkout becomes transaction_id here
+        order_id: finalOrderId
     };
-
-    const response = await makeAPICall('/transactions', 'POST', authData);
     
-    if (response.success) {
+    // Generate a unique idempotency key for this authorization request
+    // Using order_id + timestamp ensures uniqueness while allowing retries with same order_id
+    const idempotencyKey = `auth_${finalOrderId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // According to Affirm docs: https://docs.affirm.com/developers/reference/authorize_transaction
+    // The endpoint is /api/v1/transactions (not /api/v2)
+    // We need to use the v1 endpoint specifically for transaction authorization
+    const baseUrl = CONFIG.currentEnv === 'sandbox' 
+        ? 'https://sandbox.affirm.com/api/v1'
+        : 'https://api.affirm.com/api/v1';
+    const url = `${baseUrl}/transactions`;
+    
+    // Apply CORS proxy if configured
+    let finalUrl = url;
+    if (CONFIG.corsProxy) {
+        let proxy = CONFIG.corsProxy.trim();
+        proxy = proxy.replace(/\/+$/, '');
+        const proxyBaseUrl = proxy.replace(/\/proxy\/?.*$/, '');
+        proxy = proxyBaseUrl + '/proxy';
+        finalUrl = `${proxy}/${url}`;
+    }
+    
+    // Get decrypted keys from secure key manager
+    const keys = keyManager.getKeys();
+    if (!keys || !keys.publicKey || !keys.privateKey) {
         displayResult('transaction-auth-result', 
-            `Transaction authorized successfully!\n\n${formatJSON(response.data)}\n\nStore transaction_id for future operations`,
-            'success');
-    } else {
-        displayResult('transaction-auth-result', `Error: ${response.error}`, 'error');
+            'Error: API credentials not available. Please unlock your encrypted keys using your passphrase in the Secure Key Management section.',
+            'error');
+        return;
+    }
+    
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Basic ${btoa(keys.publicKey + ':' + keys.privateKey)}`,
+            'Idempotency-Key': idempotencyKey
+        },
+        body: JSON.stringify(authData)
+    };
+    
+    try {
+        const response = await fetch(finalUrl, options);
+        
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            data = { message: await response.text() };
+        }
+        
+        if (response.ok) {
+            displayResult('transaction-auth-result', 
+                `Transaction authorized successfully!\n\nOrder ID: ${finalOrderId}\nTransaction ID: ${data.id || 'N/A'}\n\n${formatJSON(data)}\n\nStore transaction_id for future operations`,
+                'success');
+        } else {
+            displayResult('transaction-auth-result', 
+                `Error: API Error (${response.status}): ${data.message || data.error || JSON.stringify(data)}\n\nDebug Info:\n- Endpoint used: ${url}\n- Order ID: ${finalOrderId}\n- Idempotency Key: ${idempotencyKey.substring(0, 30)}...\n- Transaction ID (from checkout): ${checkoutToken.substring(0, 10)}...\n- Check browser console for detailed request info`,
+                'error');
+        }
+    } catch (error) {
+        displayResult('transaction-auth-result', 
+            `Error: Network Error - ${error.message}\n\nDebug Info:\n- Endpoint used: ${url}\n- Order ID: ${finalOrderId}\n- Check browser console for detailed error info`,
+            'error');
     }
 }
 
@@ -408,15 +502,72 @@ async function testTransactionCapture() {
         return;
     }
 
-    const captureData = amount > 0 ? { amount: amount } : {};
-    const response = await makeAPICall(`/transactions/${transactionId}/capture`, 'POST', captureData);
+    // According to Affirm docs: https://docs.affirm.com/developers/reference/capture_transaction
+    // Amount must be in cents (integer), and endpoint uses /api/v1
+    const captureData = amount > 0 ? { amount: Math.round(amount * 100) } : {};
     
-    if (response.success) {
+    // Use v1 API for transaction operations
+    const baseUrl = CONFIG.currentEnv === 'sandbox' 
+        ? 'https://sandbox.affirm.com/api/v1'
+        : 'https://api.affirm.com/api/v1';
+    const url = `${baseUrl}/transactions/${transactionId}/capture`;
+    
+    // Generate idempotency key for capture
+    const idempotencyKey = `capture_${transactionId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Apply CORS proxy if configured
+    let finalUrl = url;
+    if (CONFIG.corsProxy) {
+        let proxy = CONFIG.corsProxy.trim();
+        proxy = proxy.replace(/\/+$/, '');
+        const proxyBaseUrl = proxy.replace(/\/proxy\/?.*$/, '');
+        proxy = proxyBaseUrl + '/proxy';
+        finalUrl = `${proxy}/${url}`;
+    }
+    
+    // Get decrypted keys
+    const keys = keyManager.getKeys();
+    if (!keys || !keys.publicKey || !keys.privateKey) {
         displayResult('transaction-capture-result', 
-            `Transaction captured successfully!\n\n${formatJSON(response.data)}`,
-            'success');
-    } else {
-        displayResult('transaction-capture-result', `Error: ${response.error}`, 'error');
+            'Error: API credentials not available. Please unlock your encrypted keys.',
+            'error');
+        return;
+    }
+    
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Basic ${btoa(keys.publicKey + ':' + keys.privateKey)}`,
+            'Idempotency-Key': idempotencyKey
+        },
+        body: Object.keys(captureData).length > 0 ? JSON.stringify(captureData) : undefined
+    };
+    
+    try {
+        const response = await fetch(finalUrl, options);
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            data = { message: await response.text() };
+        }
+        
+        if (response.ok) {
+            displayResult('transaction-capture-result', 
+                `Transaction captured successfully!\n\n${formatJSON(data)}`,
+                'success');
+        } else {
+            displayResult('transaction-capture-result', 
+                `Error: API Error (${response.status}): ${data.message || data.error || JSON.stringify(data)}`,
+                'error');
+        }
+    } catch (error) {
+        displayResult('transaction-capture-result', 
+            `Error: Network Error - ${error.message}`,
+            'error');
     }
 }
 
@@ -453,14 +604,68 @@ async function testTransactionVoid() {
         return;
     }
 
-    const response = await makeAPICall(`/transactions/${transactionId}/void`, 'POST');
+    // According to Affirm docs: https://docs.affirm.com/developers/reference/void_transaction
+    // Endpoint uses /api/v1
+    const baseUrl = CONFIG.currentEnv === 'sandbox' 
+        ? 'https://sandbox.affirm.com/api/v1'
+        : 'https://api.affirm.com/api/v1';
+    const url = `${baseUrl}/transactions/${transactionId}/void`;
     
-    if (response.success) {
+    // Generate idempotency key for void
+    const idempotencyKey = `void_${transactionId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Apply CORS proxy if configured
+    let finalUrl = url;
+    if (CONFIG.corsProxy) {
+        let proxy = CONFIG.corsProxy.trim();
+        proxy = proxy.replace(/\/+$/, '');
+        const proxyBaseUrl = proxy.replace(/\/proxy\/?.*$/, '');
+        proxy = proxyBaseUrl + '/proxy';
+        finalUrl = `${proxy}/${url}`;
+    }
+    
+    // Get decrypted keys
+    const keys = keyManager.getKeys();
+    if (!keys || !keys.publicKey || !keys.privateKey) {
         displayResult('transaction-void-result', 
-            `Transaction voided successfully!\n\n${formatJSON(response.data)}`,
-            'success');
-    } else {
-        displayResult('transaction-void-result', `Error: ${response.error}`, 'error');
+            'Error: API credentials not available. Please unlock your encrypted keys.',
+            'error');
+        return;
+    }
+    
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Basic ${btoa(keys.publicKey + ':' + keys.privateKey)}`,
+            'Idempotency-Key': idempotencyKey
+        }
+    };
+    
+    try {
+        const response = await fetch(finalUrl, options);
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            data = { message: await response.text() };
+        }
+        
+        if (response.ok) {
+            displayResult('transaction-void-result', 
+                `Transaction voided successfully!\n\n${formatJSON(data)}`,
+                'success');
+        } else {
+            displayResult('transaction-void-result', 
+                `Error: API Error (${response.status}): ${data.message || data.error || JSON.stringify(data)}`,
+                'error');
+        }
+    } catch (error) {
+        displayResult('transaction-void-result', 
+            `Error: Network Error - ${error.message}`,
+            'error');
     }
 }
 
@@ -473,15 +678,72 @@ async function testTransactionRefund() {
         return;
     }
 
-    const refundData = amount > 0 ? { amount: amount } : {};
-    const response = await makeAPICall(`/transactions/${transactionId}/refund`, 'POST', refundData);
+    // According to Affirm docs: https://docs.affirm.com/developers/reference/refund_transaction
+    // Amount must be in cents (integer), and endpoint uses /api/v1
+    const refundData = amount > 0 ? { amount: Math.round(amount * 100) } : {};
     
-    if (response.success) {
+    // Use v1 API for transaction operations
+    const baseUrl = CONFIG.currentEnv === 'sandbox' 
+        ? 'https://sandbox.affirm.com/api/v1'
+        : 'https://api.affirm.com/api/v1';
+    const url = `${baseUrl}/transactions/${transactionId}/refund`;
+    
+    // Generate idempotency key for refund
+    const idempotencyKey = `refund_${transactionId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Apply CORS proxy if configured
+    let finalUrl = url;
+    if (CONFIG.corsProxy) {
+        let proxy = CONFIG.corsProxy.trim();
+        proxy = proxy.replace(/\/+$/, '');
+        const proxyBaseUrl = proxy.replace(/\/proxy\/?.*$/, '');
+        proxy = proxyBaseUrl + '/proxy';
+        finalUrl = `${proxy}/${url}`;
+    }
+    
+    // Get decrypted keys
+    const keys = keyManager.getKeys();
+    if (!keys || !keys.publicKey || !keys.privateKey) {
         displayResult('transaction-refund-result', 
-            `Refund processed successfully!\n\n${formatJSON(response.data)}`,
-            'success');
-    } else {
-        displayResult('transaction-refund-result', `Error: ${response.error}`, 'error');
+            'Error: API credentials not available. Please unlock your encrypted keys.',
+            'error');
+        return;
+    }
+    
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Basic ${btoa(keys.publicKey + ':' + keys.privateKey)}`,
+            'Idempotency-Key': idempotencyKey
+        },
+        body: Object.keys(refundData).length > 0 ? JSON.stringify(refundData) : undefined
+    };
+    
+    try {
+        const response = await fetch(finalUrl, options);
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            data = { message: await response.text() };
+        }
+        
+        if (response.ok) {
+            displayResult('transaction-refund-result', 
+                `Refund processed successfully!\n\n${formatJSON(data)}`,
+                'success');
+        } else {
+            displayResult('transaction-refund-result', 
+                `Error: API Error (${response.status}): ${data.message || data.error || JSON.stringify(data)}`,
+                'error');
+        }
+    } catch (error) {
+        displayResult('transaction-refund-result', 
+            `Error: Network Error - ${error.message}`,
+            'error');
     }
 }
 
@@ -695,12 +957,61 @@ async function testTransactionStates() {
         return;
     }
 
-    const response = await makeAPICall(`/transactions/${transactionId}`, 'GET');
+    // According to Affirm docs: https://docs.affirm.com/developers/reference/read_transaction
+    // Endpoint uses /api/v1
+    const baseUrl = CONFIG.currentEnv === 'sandbox' 
+        ? 'https://sandbox.affirm.com/api/v1'
+        : 'https://api.affirm.com/api/v1';
+    const url = `${baseUrl}/transactions/${transactionId}`;
     
-    if (response.success) {
-        displayResult('transaction-state-result', formatJSON(response.data), 'success');
-    } else {
-        displayResult('transaction-state-result', `Error: ${response.error}`, 'error');
+    // Apply CORS proxy if configured
+    let finalUrl = url;
+    if (CONFIG.corsProxy) {
+        let proxy = CONFIG.corsProxy.trim();
+        proxy = proxy.replace(/\/+$/, '');
+        const proxyBaseUrl = proxy.replace(/\/proxy\/?.*$/, '');
+        proxy = proxyBaseUrl + '/proxy';
+        finalUrl = `${proxy}/${url}`;
+    }
+    
+    // Get decrypted keys
+    const keys = keyManager.getKeys();
+    if (!keys || !keys.publicKey || !keys.privateKey) {
+        displayResult('transaction-state-result', 
+            'Error: API credentials not available. Please unlock your encrypted keys.',
+            'error');
+        return;
+    }
+    
+    const options = {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Authorization': `Basic ${btoa(keys.publicKey + ':' + keys.privateKey)}`
+        }
+    };
+    
+    try {
+        const response = await fetch(finalUrl, options);
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            data = { message: await response.text() };
+        }
+        
+        if (response.ok) {
+            displayResult('transaction-state-result', formatJSON(data), 'success');
+        } else {
+            displayResult('transaction-state-result', 
+                `Error: API Error (${response.status}): ${data.message || data.error || JSON.stringify(data)}`,
+                'error');
+        }
+    } catch (error) {
+        displayResult('transaction-state-result', 
+            `Error: Network Error - ${error.message}`,
+            'error');
     }
 }
 
@@ -713,15 +1024,67 @@ async function testUpdateTransaction() {
         return;
     }
 
-    const updateData = { order_id: orderId };
-    const response = await makeAPICall(`/transactions/${transactionId}`, 'PATCH', updateData);
+    // According to Affirm docs: https://docs.affirm.com/developers/reference/update_transaction
+    // Endpoint uses /api/v1 and method is POST (not PATCH)
+    const updateData = orderId ? { order_id: orderId } : {};
     
-    if (response.success) {
+    const baseUrl = CONFIG.currentEnv === 'sandbox' 
+        ? 'https://sandbox.affirm.com/api/v1'
+        : 'https://api.affirm.com/api/v1';
+    const url = `${baseUrl}/transactions/${transactionId}`;
+    
+    // Apply CORS proxy if configured
+    let finalUrl = url;
+    if (CONFIG.corsProxy) {
+        let proxy = CONFIG.corsProxy.trim();
+        proxy = proxy.replace(/\/+$/, '');
+        const proxyBaseUrl = proxy.replace(/\/proxy\/?.*$/, '');
+        proxy = proxyBaseUrl + '/proxy';
+        finalUrl = `${proxy}/${url}`;
+    }
+    
+    // Get decrypted keys
+    const keys = keyManager.getKeys();
+    if (!keys || !keys.publicKey || !keys.privateKey) {
         displayResult('update-transaction-result', 
-            `Transaction updated successfully!\n\n${formatJSON(response.data)}`,
-            'success');
-    } else {
-        displayResult('update-transaction-result', `Error: ${response.error}`, 'error');
+            'Error: API credentials not available. Please unlock your encrypted keys.',
+            'error');
+        return;
+    }
+    
+    const options = {
+        method: 'POST',  // Affirm uses POST for updates, not PATCH
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Basic ${btoa(keys.publicKey + ':' + keys.privateKey)}`
+        },
+        body: Object.keys(updateData).length > 0 ? JSON.stringify(updateData) : undefined
+    };
+    
+    try {
+        const response = await fetch(finalUrl, options);
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            data = { message: await response.text() };
+        }
+        
+        if (response.ok) {
+            displayResult('update-transaction-result', 
+                `Transaction updated successfully!\n\n${formatJSON(data)}`,
+                'success');
+        } else {
+            displayResult('update-transaction-result', 
+                `Error: API Error (${response.status}): ${data.message || data.error || JSON.stringify(data)}`,
+                'error');
+        }
+    } catch (error) {
+        displayResult('update-transaction-result', 
+            `Error: Network Error - ${error.message}`,
+            'error');
     }
 }
 
@@ -733,16 +1096,184 @@ async function testReadTransaction() {
         return;
     }
 
-    const response = await makeAPICall(`/transactions/${transactionId}`, 'GET');
+    // According to Affirm docs: https://docs.affirm.com/developers/reference/read_transaction
+    // Endpoint uses /api/v1
+    const baseUrl = CONFIG.currentEnv === 'sandbox' 
+        ? 'https://sandbox.affirm.com/api/v1'
+        : 'https://api.affirm.com/api/v1';
+    const url = `${baseUrl}/transactions/${transactionId}`;
     
-    if (response.success) {
-        displayResult('read-transaction-result', formatJSON(response.data), 'success');
-    } else {
-        displayResult('read-transaction-result', `Error: ${response.error}`, 'error');
+    // Apply CORS proxy if configured
+    let finalUrl = url;
+    if (CONFIG.corsProxy) {
+        let proxy = CONFIG.corsProxy.trim();
+        proxy = proxy.replace(/\/+$/, '');
+        const proxyBaseUrl = proxy.replace(/\/proxy\/?.*$/, '');
+        proxy = proxyBaseUrl + '/proxy';
+        finalUrl = `${proxy}/${url}`;
+    }
+    
+    // Get decrypted keys
+    const keys = keyManager.getKeys();
+    if (!keys || !keys.publicKey || !keys.privateKey) {
+        displayResult('read-transaction-result', 
+            'Error: API credentials not available. Please unlock your encrypted keys.',
+            'error');
+        return;
+    }
+    
+    const options = {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Authorization': `Basic ${btoa(keys.publicKey + ':' + keys.privateKey)}`
+        }
+    };
+    
+    try {
+        const response = await fetch(finalUrl, options);
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            data = { message: await response.text() };
+        }
+        
+        if (response.ok) {
+            displayResult('read-transaction-result', formatJSON(data), 'success');
+        } else {
+            displayResult('read-transaction-result', 
+                `Error: API Error (${response.status}): ${data.message || data.error || JSON.stringify(data)}`,
+                'error');
+        }
+    } catch (error) {
+        displayResult('read-transaction-result', 
+            `Error: Network Error - ${error.message}`,
+            'error');
     }
 }
 
 // API Testing Tools
+// Function to update request body based on selected endpoint
+function updateAPIRequestBody() {
+    const endpoint = document.getElementById('api-endpoint').value;
+    const method = document.getElementById('api-method').value;
+    const bodyTextarea = document.getElementById('api-body');
+    
+    // Get keys if available
+    const keys = keyManager.getKeys();
+    const publicKey = keys ? keys.publicKey : 'YOUR_PUBLIC_KEY';
+    
+    // Generate sample data
+    const orderId = 'TEST_' + Date.now();
+    const amountCents = 19999; // $199.99 in cents
+    const taxAmountCents = 1999; // $19.99 in cents
+    
+    let bodyTemplate = {};
+    
+    // Set method based on endpoint if it's a POST endpoint
+    if (endpoint === '/checkout/direct' || endpoint === '/transactions' || 
+        endpoint.includes('/capture') || endpoint.includes('/void') || 
+        endpoint.includes('/refund') || endpoint.includes('/finalize') || 
+        endpoint.includes('/cancel')) {
+        document.getElementById('api-method').value = 'POST';
+    } else if (endpoint.includes('/{id}') && !endpoint.includes('/capture') && 
+               !endpoint.includes('/void') && !endpoint.includes('/refund') && 
+               !endpoint.includes('/finalize') && !endpoint.includes('/cancel')) {
+        document.getElementById('api-method').value = 'GET';
+    }
+    
+    // Generate body template based on endpoint
+    if (endpoint === '/checkout/direct') {
+        bodyTemplate = {
+            merchant: {
+                public_api_key: publicKey,
+                user_confirmation_url: 'https://tdiipo1.github.io/confirm',
+                user_cancel_url: 'https://tdiipo1.github.io/cancel'
+            },
+            items: [{
+                display_name: 'Test Item',
+                sku: 'TEST-001',
+                unit_price: amountCents,
+                qty: 1,
+                item_image_url: '',
+                item_url: window.location.href
+            }],
+            shipping: {
+                name: {
+                    first: 'AITS',
+                    last: 'User',
+                    full: 'AITS User'
+                },
+                address: {
+                    line1: '123 Test St',
+                    line2: 'Apt 123',
+                    city: 'San Francisco',
+                    state: 'CA',
+                    zipcode: '94105',
+                    country: 'USA'
+                }
+            },
+            billing: {
+                name: {
+                    first: 'AITS',
+                    last: 'User'
+                },
+                address: {
+                    line1: '123 Test St',
+                    line2: 'Apt 123',
+                    city: 'San Francisco',
+                    state: 'CA',
+                    zipcode: '94105',
+                    country: 'USA'
+                }
+            },
+            total: amountCents,
+            tax_amount: taxAmountCents,
+            order_id: orderId
+        };
+    } else if (endpoint === '/transactions') {
+        // According to Affirm docs: https://docs.affirm.com/developers/reference/authorize_transaction
+        // The request body requires transaction_id (the checkout token) and order_id
+        bodyTemplate = {
+            transaction_id: 'CHECKOUT_TOKEN_HERE',
+            order_id: orderId
+        };
+    } else if (endpoint.includes('/capture')) {
+        // According to Affirm docs: https://docs.affirm.com/developers/reference/capture_transaction
+        // Amount must be in cents (integer), optional field
+        bodyTemplate = {
+            amount: amountCents  // Optional: omit for full capture
+        };
+    } else if (endpoint.includes('/refund')) {
+        // According to Affirm docs: https://docs.affirm.com/developers/reference/refund_transaction
+        // Amount must be in cents (integer), optional field
+        bodyTemplate = {
+            amount: amountCents  // Optional: omit for full refund
+        };
+    } else if (endpoint.includes('/void')) {
+        // According to Affirm docs: https://docs.affirm.com/developers/reference/void_transaction
+        // No body required for void
+        bodyTemplate = {};
+    } else if (endpoint.includes('/finalize')) {
+        // According to Affirm docs: https://docs.affirm.com/developers/reference/finalize_card
+        // Cards API may have different requirements - check documentation
+        bodyTemplate = {};
+    } else if (endpoint.includes('/cancel')) {
+        // According to Affirm docs: https://docs.affirm.com/developers/reference/cancel_card
+        // Cards API may have different requirements - check documentation
+        bodyTemplate = {};
+    }
+    
+    // Only update body if method requires a body (POST, PUT, PATCH)
+    if (['POST', 'PUT', 'PATCH'].includes(method) && Object.keys(bodyTemplate).length > 0) {
+        bodyTextarea.value = JSON.stringify(bodyTemplate, null, 2);
+    } else {
+        bodyTextarea.value = '';
+    }
+}
+
 async function testAPIRequest() {
     const endpoint = document.getElementById('api-endpoint').value;
     const method = document.getElementById('api-method').value;
