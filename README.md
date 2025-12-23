@@ -40,6 +40,20 @@ The site is built with static HTML, CSS, and JavaScript. To run locally:
    ```
    Then visit `http://localhost:8000`
 
+### Setting Up the CORS Proxy Server
+
+To enable real API calls from the browser, you need to run a CORS proxy server:
+
+**Quick Start:**
+```bash
+npm install
+npm start
+```
+
+**For detailed Mac setup instructions**, see [MAC_SETUP.md](MAC_SETUP.md)
+
+The proxy server will run on `http://localhost:3000`. Set this as your CORS Proxy URL in the Secure Key Management section.
+
 ## Python Site Generator
 
 A Python script (`generate_site.py`) is included for generating configuration files and validating the site structure:

@@ -942,6 +942,84 @@ function loadAPIConfig() {
     // Keys are loaded from secure storage when unlocked
 }
 
+// Proxy server helper functions
+function showProxyInstructions() {
+    const instructions = document.getElementById('proxy-instructions');
+    if (instructions.style.display === 'none') {
+        instructions.style.display = 'block';
+    } else {
+        instructions.style.display = 'none';
+    }
+}
+
+function copyProxyCommand() {
+    const commands = [
+        'cd ' + window.location.pathname.replace(/\/[^/]*$/, ''),
+        'npm install',
+        'npm start'
+    ].join('\n');
+    
+    navigator.clipboard.writeText(commands).then(() => {
+        displayResult('api-config-result', 
+            '✅ Commands copied to clipboard!\n\n' +
+            'Paste them into your terminal to start the proxy server.\n\n' +
+            'After starting, set CORS Proxy to: http://localhost:3000/proxy/',
+            'success');
+    }).catch(() => {
+        // Fallback if clipboard API fails
+        const textarea = document.createElement('textarea');
+        textarea.value = commands;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        displayResult('api-config-result', 
+            '✅ Commands copied to clipboard!\n\n' +
+            'Paste them into your terminal to start the proxy server.',
+            'success');
+    });
+}
+
+async function testProxyConnection() {
+    const proxyUrl = document.getElementById('cors-proxy').value.trim() || 'http://localhost:3000';
+    const healthUrl = proxyUrl.replace(/\/proxy\/?$/, '') + '/health';
+    
+    displayResult('api-config-result', 
+        `Testing proxy connection to: ${healthUrl}\n\nPlease wait...`,
+        'info');
+    
+    try {
+        const response = await fetch(healthUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            displayResult('api-config-result', 
+                `✅ Proxy server is running!\n\n${formatJSON(data)}\n\n` +
+                `You can now use this proxy for API calls.`,
+                'success');
+        } else {
+            displayResult('api-config-result', 
+                `⚠️ Proxy server responded with status ${response.status}\n\n` +
+                `Make sure the proxy server is running and the URL is correct.`,
+                'warning');
+        }
+    } catch (error) {
+        displayResult('api-config-result', 
+            `❌ Cannot connect to proxy server\n\n` +
+            `Error: ${error.message}\n\n` +
+            `Make sure:\n` +
+            `1. Proxy server is running (npm start)\n` +
+            `2. URL is correct: ${proxyUrl}\n` +
+            `3. No firewall is blocking port 3000`,
+            'error');
+    }
+}
+
 function updateAPIModeBanner() {
     const banner = document.getElementById('api-mode-banner');
     const text = document.getElementById('api-mode-text');
