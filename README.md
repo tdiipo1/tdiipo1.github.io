@@ -40,6 +40,46 @@ The site is built with static HTML, CSS, and JavaScript. To run locally:
    ```
    Then visit `http://localhost:8000`
 
+## Lightweight Backend Proxy (Node.js)
+
+Running a tiny proxy keeps your private key off the browser and avoids CORS. A ready-to-run example using Express is included in `proxy-server.js`.
+
+### 1) Install dependencies
+
+```bash
+npm install express dotenv node-fetch@2
+```
+
+### 2) Set environment variables
+
+Create a `.env` file (or export vars in your shell):
+
+```bash
+AFFIRM_PUBLIC_KEY=your_public_key
+AFFIRM_PRIVATE_KEY=your_private_key
+AFFIRM_API_BASE=https://sandbox.affirm.com/api/v1
+PORT=5050
+```
+
+### 3) Run the proxy
+
+```bash
+node proxy-server.js
+```
+
+The proxy exposes:
+
+- `POST /proxy` forwarding to Affirm (expects JSON with `path`, optional `method`, and optional `body`).
+- `GET /health` for a quick status check.
+
+### 4) Point the web app to the proxy
+
+In the site’s Environment Configuration, set the base URL to your proxy (e.g., `http://localhost:5050/proxy`). Requests will flow as:
+
+```
+Browser → proxy-server.js → Affirm Sandbox
+```
+
 ## Python Site Generator
 
 A Python script (`generate_site.py`) is included for generating configuration files and validating the site structure:
