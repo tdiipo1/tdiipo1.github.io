@@ -54,6 +54,13 @@ npm start
 
 The proxy server will run on `http://localhost:3000`. Set this as your CORS Proxy URL in the Secure Key Management section.
 
+The proxy server (`proxy-server.js`) provides:
+- URL-based routing: `/proxy/*` forwards requests to Affirm API
+- Support for all HTTP methods (GET, POST, PUT, PATCH, DELETE)
+- Health check endpoint: `/health`
+- Automatic CORS handling
+- Request logging
+
 ## Python Site Generator
 
 A Python script (`generate_site.py`) is included for generating configuration files and validating the site structure:
