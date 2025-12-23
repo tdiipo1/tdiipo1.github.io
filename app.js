@@ -128,6 +128,15 @@ async function makeAPICall(endpoint, method = 'GET', body = null) {
     }
 
     try {
+        // Debug logging (remove in production)
+        console.log('Making API call:', {
+            method: method,
+            url: url,
+            endpoint: endpoint,
+            hasBody: !!body,
+            bodySize: body ? JSON.stringify(body).length : 0
+        });
+        
         // Make actual API call (through proxy if configured)
         const response = await fetch(url, options);
         
@@ -349,6 +358,9 @@ async function testCheckoutInit() {
     };
 
     // Use the correct endpoint: /api/v2/checkout/direct (not /checkouts)
+    console.log('Checkout Data:', checkoutData);
+    console.log('Endpoint: /checkout/direct');
+    
     const response = await makeAPICall('/checkout/direct', 'POST', checkoutData);
     
     if (response.success) {
@@ -356,7 +368,9 @@ async function testCheckoutInit() {
             `Checkout initialized successfully!\n\n${formatJSON(response.data)}\n\nNext steps:\n1. Use checkout_id (${response.data.checkout_id || 'N/A'}) to launch the modal\n2. Call affirm.checkout() with checkoutAri and mode: "modal"\n3. Use affirm.checkout.open() to display the modal`,
             'success');
     } else {
-        displayResult('checkout-init-result', `Error: ${response.error}`, 'error');
+        displayResult('checkout-init-result', 
+            `Error: ${response.error}\n\nDebug Info:\n- Endpoint used: /checkout/direct\n- Check browser console for detailed request info`,
+            'error');
     }
 }
 
