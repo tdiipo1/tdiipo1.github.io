@@ -78,6 +78,33 @@ function formatJSON(obj) {
     return JSON.stringify(obj, null, 2);
 }
 
+// Utility: Generate idempotency key (must be <= 36 characters per Affirm API)
+function generateIdempotencyKey(prefix, identifier) {
+    // Format: prefix_timestamp_random
+    // Ensure total length <= 36 characters
+    const timestamp = Date.now().toString(36); // Base36 encoding for shorter timestamp
+    const random = Math.random().toString(36).substr(2, 6); // 6 random chars
+    const id = identifier ? identifier.toString().substr(0, 8) : ''; // Max 8 chars from identifier
+    
+    // Build key: prefix_id_timestamp_random (max 36 chars)
+    let key = prefix;
+    if (id) {
+        key += `_${id}`;
+    }
+    key += `_${timestamp}_${random}`;
+    
+    // Ensure it's exactly 36 characters or less
+    if (key.length > 36) {
+        // If too long, use hash-like approach
+        const hash = key.split('').reduce((acc, char) => {
+            return ((acc << 5) - acc) + char.charCodeAt(0) | 0;
+        }, 0).toString(36);
+        key = `${prefix}_${hash}`.substr(0, 36);
+    }
+    
+    return key;
+}
+
 // Utility: Make API call
 // NOTE: By default, this uses MOCK responses for safety.
 // Set CONFIG.useRealAPI = true and unlock encrypted keys to make real API calls.
@@ -424,9 +451,8 @@ async function testTransactionAuth() {
         order_id: finalOrderId
     };
     
-    // Generate a unique idempotency key for this authorization request
-    // Using order_id + timestamp ensures uniqueness while allowing retries with same order_id
-    const idempotencyKey = `auth_${finalOrderId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate a unique idempotency key for this authorization request (<= 36 chars)
+    const idempotencyKey = generateIdempotencyKey('auth', finalOrderId);
 
     // According to Affirm docs: https://docs.affirm.com/developers/reference/authorize_transaction
     // The endpoint is /api/v1/transactions (not /api/v2)
@@ -512,8 +538,8 @@ async function testTransactionCapture() {
         : 'https://api.affirm.com/api/v1';
     const url = `${baseUrl}/transactions/${transactionId}/capture`;
     
-    // Generate idempotency key for capture
-    const idempotencyKey = `capture_${transactionId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate idempotency key for capture (<= 36 chars)
+    const idempotencyKey = generateIdempotencyKey('capt', transactionId);
     
     // Apply CORS proxy if configured
     let finalUrl = url;
@@ -611,8 +637,8 @@ async function testTransactionVoid() {
         : 'https://api.affirm.com/api/v1';
     const url = `${baseUrl}/transactions/${transactionId}/void`;
     
-    // Generate idempotency key for void
-    const idempotencyKey = `void_${transactionId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate idempotency key for void (<= 36 chars)
+    const idempotencyKey = generateIdempotencyKey('void', transactionId);
     
     // Apply CORS proxy if configured
     let finalUrl = url;
@@ -688,8 +714,8 @@ async function testTransactionRefund() {
         : 'https://api.affirm.com/api/v1';
     const url = `${baseUrl}/transactions/${transactionId}/refund`;
     
-    // Generate idempotency key for refund
-    const idempotencyKey = `refund_${transactionId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate idempotency key for refund (<= 36 chars)
+    const idempotencyKey = generateIdempotencyKey('ref', transactionId);
     
     // Apply CORS proxy if configured
     let finalUrl = url;
@@ -861,8 +887,8 @@ async function testCardFinalization() {
         return;
     }
 
-    // Generate idempotency key for card finalization (POST requests should use idempotency)
-    const idempotencyKey = `finalize_${cardId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate idempotency key for card finalization (<= 36 chars)
+    const idempotencyKey = generateIdempotencyKey('fin', cardId);
     
     // Cards API uses /api/v2, makeAPICall will handle it correctly
     const response = await makeAPICall(`/cards/${cardId}/finalize`, 'POST', null, idempotencyKey);
@@ -884,8 +910,8 @@ async function testCardCancellation() {
         return;
     }
 
-    // Generate idempotency key for card cancellation (POST requests should use idempotency)
-    const idempotencyKey = `cancel_${cardId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate idempotency key for card cancellation (<= 36 chars)
+    const idempotencyKey = generateIdempotencyKey('can', cardId);
     
     // Cards API uses /api/v2, makeAPICall will handle it correctly
     const response = await makeAPICall(`/cards/${cardId}/cancel`, 'POST', null, idempotencyKey);
@@ -1041,8 +1067,8 @@ async function testUpdateTransaction() {
         : 'https://api.affirm.com/api/v1';
     const url = `${baseUrl}/transactions/${transactionId}`;
     
-    // Generate idempotency key for update (POST requests that modify data should use idempotency)
-    const idempotencyKey = `update_${transactionId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate idempotency key for update (<= 36 chars)
+    const idempotencyKey = generateIdempotencyKey('upd', transactionId);
     
     // Apply CORS proxy if configured
     let finalUrl = url;
