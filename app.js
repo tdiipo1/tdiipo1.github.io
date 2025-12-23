@@ -421,8 +421,22 @@ async function testCheckoutInit() {
     const response = await makeAPICall('/checkout/direct', 'POST', checkoutData);
     
     if (response.success) {
+        const checkoutId = response.data.checkout_id || 'N/A';
+        
+        // Auto-populate checkout token field for authorization
+        const checkoutTokenField = document.getElementById('checkout-token');
+        if (checkoutTokenField && checkoutId !== 'N/A') {
+            checkoutTokenField.value = checkoutId;
+        }
+        
+        // Auto-populate order ID field for authorization if it's empty
+        const orderIdField = document.getElementById('order-id');
+        if (orderIdField && !orderIdField.value && orderId) {
+            orderIdField.value = orderId;
+        }
+        
         displayResult('checkout-init-result', 
-            `Checkout initialized successfully!\n\nOrder ID: ${orderId}\nCheckout ID: ${response.data.checkout_id || 'N/A'}\n\n${formatJSON(response.data)}\n\nNext steps:\n1. Use checkout_id (${response.data.checkout_id || 'N/A'}) to launch the modal\n2. Call affirm.checkout() with checkoutAri and mode: "modal"\n3. Use affirm.checkout.open() to display the modal`,
+            `Checkout initialized successfully!\n\nOrder ID: ${orderId}\nCheckout ID: ${checkoutId}\n\n${formatJSON(response.data)}\n\n✅ Checkout ID has been auto-populated in the Transaction Authorization section\n\nNext steps:\n1. Go to "Transaction Authorization" section\n2. Click "AUTHORIZE TRANSACTION" (checkout_id is already filled)\n3. After authorization, use the returned transaction_id for capture/void/refund operations`,
             'success');
     } else {
         displayResult('checkout-init-result', 
@@ -504,8 +518,24 @@ async function testTransactionAuth() {
         }
         
         if (response.ok) {
+            // Extract transaction_id from response (could be data.id or data.transaction_id)
+            const transactionId = data.id || data.transaction_id || checkoutToken;
+            
+            // Auto-populate transaction_id fields for capture, void, refund, update operations
+            const captureField = document.getElementById('capture-transaction-id');
+            const voidField = document.getElementById('void-transaction-id');
+            const refundField = document.getElementById('refund-transaction-id');
+            const updateField = document.getElementById('update-transaction-id');
+            const splitField = document.getElementById('split-transaction-id');
+            
+            if (captureField) captureField.value = transactionId;
+            if (voidField) voidField.value = transactionId;
+            if (refundField) refundField.value = transactionId;
+            if (updateField) updateField.value = transactionId;
+            if (splitField) splitField.value = transactionId;
+            
             displayResult('transaction-auth-result', 
-                `Transaction authorized successfully!\n\nOrder ID: ${finalOrderId}\nTransaction ID: ${data.id || 'N/A'}\n\n${formatJSON(data)}\n\nStore transaction_id for future operations`,
+                `Transaction authorized successfully!\n\nOrder ID: ${finalOrderId}\nTransaction ID: ${transactionId}\n\n${formatJSON(data)}\n\n✅ Transaction ID has been auto-populated in Capture, Void, Refund, and Update fields`,
                 'success');
         } else {
             displayResult('transaction-auth-result', 
