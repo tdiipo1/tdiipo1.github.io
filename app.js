@@ -49,9 +49,35 @@ function initializeDarkMode() {
     }
 }
 
+// Initialize last updated timestamp
+function initializeLastUpdated() {
+    // You can set a specific last update date here, or it will use the current date/time
+    // Format: 'YYYY-MM-DDTHH:MM:SS-TZ:TZ' (e.g., '2024-12-19T10:30:00-08:00')
+    // Leave as null to use current date/time
+    const lastUpdateDateString = null; // Set to a specific date string or null for current time
+    
+    const timestampElement = document.getElementById('last-updated-timestamp');
+    if (timestampElement) {
+        const lastUpdatedDate = lastUpdateDateString ? new Date(lastUpdateDateString) : new Date();
+        
+        // Format: "December 19, 2024 at 10:30 AM PST"
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            timeZoneName: 'short'
+        };
+        const formattedDate = lastUpdatedDate.toLocaleString('en-US', options);
+        timestampElement.textContent = formattedDate;
+    }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     initializeDarkMode();
+    initializeLastUpdated();
     initializeSecureKeyManager();
     setupSmoothScrolling();
     setupScrollToTop();
