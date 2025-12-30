@@ -328,6 +328,15 @@ function testPrequalification() {
     displayResult('prequal-result', formatJSON(result), 'success');
 }
 
+// Toggle function for showing all fields
+function toggleAllFields() {
+    const toggle = document.getElementById('show-all-fields-toggle');
+    const section = document.getElementById('all-fields-section');
+    if (toggle && section) {
+        section.style.display = toggle.checked ? 'block' : 'none';
+    }
+}
+
 // Direct API Tests
 async function testCheckoutInit() {
     const amount = parseFloat(document.getElementById('checkout-amount').value);
@@ -366,12 +375,71 @@ async function testCheckoutInit() {
     const billingZipcode = document.getElementById('billing-zipcode')?.value || '94105';
     const billingCountry = document.getElementById('billing-country')?.value || 'USA';
     
-    const checkoutData = {
-        merchant: {
-            public_api_key: publicKey,  // Required: public API key must be in request body
-            user_confirmation_url: 'https://tdiipo1.github.io/confirm',
-            user_cancel_url: 'https://tdiipo1.github.io/cancel'
+    // Build merchant object with optional fields
+    const merchantObj = {
+        public_api_key: publicKey,  // Required: public API key must be in request body
+        user_confirmation_url: 'https://tdiipo1.github.io/confirm',
+        user_cancel_url: 'https://tdiipo1.github.io/cancel'
+    };
+    
+    // Add optional merchant fields if provided
+    const merchantNameField = document.getElementById('merchant-name-field')?.value?.trim();
+    if (merchantNameField) merchantObj.name = merchantNameField;
+    
+    const confirmationAction = document.getElementById('merchant-confirmation-action')?.value?.trim();
+    if (confirmationAction) merchantObj.user_confirmation_url_action = confirmationAction;
+    
+    const useVcn = document.getElementById('merchant-use-vcn')?.value;
+    if (useVcn !== undefined) merchantObj.use_vcn = useVcn === 'true';
+    
+    // Build shipping object with optional contact info
+    const shippingObj = {
+        name: {
+            first: shippingFirstName,
+            last: shippingLastName,
+            full: shippingFullName
         },
+        address: {
+            line1: shippingLine1,
+            line2: shippingLine2,
+            city: shippingCity,
+            state: shippingState,
+            zipcode: shippingZipcode,
+            country: shippingCountry
+        }
+    };
+    
+    const shippingPhone = document.getElementById('shipping-phone')?.value?.trim();
+    if (shippingPhone) shippingObj.phone_number = shippingPhone;
+    
+    const shippingEmail = document.getElementById('shipping-email')?.value?.trim();
+    if (shippingEmail) shippingObj.email = shippingEmail;
+    
+    // Build billing object with optional contact info
+    const billingObj = {
+        name: {
+            first: billingFirstName,
+            last: billingLastName
+        },
+        address: {
+            line1: billingLine1,
+            line2: billingLine2,
+            city: billingCity,
+            state: billingState,
+            zipcode: billingZipcode,
+            country: billingCountry
+        }
+    };
+    
+    const billingPhone = document.getElementById('billing-phone')?.value?.trim();
+    if (billingPhone) billingObj.phone_number = billingPhone;
+    
+    const billingEmail = document.getElementById('billing-email')?.value?.trim();
+    if (billingEmail) billingObj.email = billingEmail;
+    
+    // Build checkout data object
+    const checkoutData = {
+        merchant: merchantObj,
         items: [{
             display_name: document.getElementById('checkout-item-name')?.value || 'Test Item',
             sku: document.getElementById('checkout-item-sku')?.value || 'TEST-001',
@@ -380,39 +448,94 @@ async function testCheckoutInit() {
             item_image_url: document.getElementById('checkout-item-image-url')?.value || '',
             item_url: document.getElementById('checkout-item-url')?.value || window.location.href
         }],
-        shipping: {
-            name: {
-                first: shippingFirstName,
-                last: shippingLastName,
-                full: shippingFullName
-            },
-            address: {
-                line1: shippingLine1,
-                line2: shippingLine2,
-                city: shippingCity,
-                state: shippingState,
-                zipcode: shippingZipcode,
-                country: shippingCountry
-            }
-        },
-        billing: {
-            name: {
-                first: billingFirstName,
-                last: billingLastName
-            },
-            address: {
-                line1: billingLine1,
-                line2: billingLine2,
-                city: billingCity,
-                state: billingState,
-                zipcode: billingZipcode,
-                country: billingCountry
-            }
-        },
+        shipping: shippingObj,
+        billing: billingObj,
         total: amountCents,  // Convert to cents
         tax_amount: taxAmountCents,  // Convert to cents
         order_id: orderId
     };
+    
+    // Add currency (required field)
+    const currency = document.getElementById('checkout-currency')?.value || 'USD';
+    checkoutData.currency = currency;
+    
+    // Add shipping_amount if provided
+    const shippingAmount = document.getElementById('checkout-shipping-amount')?.value;
+    if (shippingAmount && parseFloat(shippingAmount) > 0) {
+        checkoutData.shipping_amount = Math.round(parseFloat(shippingAmount) * 100); // Convert to cents
+    }
+    
+    // Add financing_program if provided
+    const financingProgram = document.getElementById('financing-program')?.value?.trim();
+    if (financingProgram) checkoutData.financing_program = financingProgram;
+    
+    // Add expiration timestamps if provided
+    const checkoutExpiration = document.getElementById('checkout-expiration')?.value;
+    if (checkoutExpiration) {
+        // Convert datetime-local to ISO timestamp (no milliseconds)
+        const expirationDate = new Date(checkoutExpiration);
+        checkoutData.checkout_expiration = expirationDate.toISOString().replace(/\.\d{3}Z$/, '');
+    }
+    
+    const expirationTime = document.getElementById('expiration-time')?.value;
+    if (expirationTime) {
+        // Convert datetime-local to ISO timestamp
+        const expirationDate = new Date(expirationTime);
+        checkoutData.expiration_time = expirationDate.toISOString().replace(/\.\d{3}Z$/, '');
+    }
+    
+    // Add store information if provided (for in-store transactions)
+    const storeName = document.getElementById('store-name')?.value?.trim();
+    const storeLine1 = document.getElementById('store-line1')?.value?.trim();
+    if (storeName || storeLine1) {
+        checkoutData.store = {};
+        if (storeName) checkoutData.store.name = storeName;
+        if (storeLine1) {
+            checkoutData.store.address = {
+                line1: storeLine1
+            };
+            const storeLine2 = document.getElementById('store-line2')?.value?.trim();
+            if (storeLine2) checkoutData.store.address.line2 = storeLine2;
+            
+            const storeCity = document.getElementById('store-city')?.value?.trim();
+            if (storeCity) checkoutData.store.address.city = storeCity;
+            
+            const storeState = document.getElementById('store-state')?.value?.trim();
+            if (storeState) checkoutData.store.address.state = storeState;
+            
+            const storeZipcode = document.getElementById('store-zipcode')?.value?.trim();
+            if (storeZipcode) checkoutData.store.address.zipcode = storeZipcode;
+            
+            const storeCountry = document.getElementById('store-country')?.value?.trim();
+            if (storeCountry) checkoutData.store.address.country = storeCountry;
+        }
+    }
+    
+    // Add discounts if provided (parse JSON)
+    const discountsJson = document.getElementById('checkout-discounts')?.value?.trim();
+    if (discountsJson) {
+        try {
+            const discounts = JSON.parse(discountsJson);
+            if (typeof discounts === 'object' && discounts !== null) {
+                checkoutData.discounts = discounts;
+            }
+        } catch (e) {
+            console.warn('Invalid discounts JSON, skipping:', e);
+        }
+    }
+    
+    // Add metadata if provided (parse JSON)
+    const metadataJson = document.getElementById('checkout-metadata')?.value?.trim();
+    if (metadataJson) {
+        try {
+            const metadata = JSON.parse(metadataJson);
+            if (typeof metadata === 'object' && metadata !== null) {
+                checkoutData.metadata = metadata;
+            }
+        } catch (e) {
+            console.warn('Invalid metadata JSON, skipping:', e);
+        }
+    }
 
     // Use the correct endpoint: /api/v2/checkout/direct (not /checkouts)
     console.log('Checkout Data:', checkoutData);
@@ -422,6 +545,7 @@ async function testCheckoutInit() {
     
     if (response.success) {
         const checkoutId = response.data.checkout_id || 'N/A';
+        const redirectUrl = response.data.redirect_url || '';
         
         // Auto-populate checkout token field for authorization
         const checkoutTokenField = document.getElementById('checkout-token');
@@ -435,9 +559,30 @@ async function testCheckoutInit() {
             orderIdField.value = orderId;
         }
         
-        displayResult('checkout-init-result', 
-            `Checkout initialized successfully!\n\nOrder ID: ${orderId}\nCheckout ID: ${checkoutId}\n\n${formatJSON(response.data)}\n\n✅ Checkout ID has been auto-populated in the Transaction Authorization section\n\nNext steps:\n1. Go to "Transaction Authorization" section\n2. Click "AUTHORIZE TRANSACTION" (checkout_id is already filled)\n3. After authorization, use the returned transaction_id for capture/void/refund operations`,
-            'success');
+        // Create HTML with clickable redirect URL that opens in popup
+        let resultHtml = `Checkout initialized successfully!<br><br>`;
+        resultHtml += `<strong>Order ID:</strong> ${orderId}<br>`;
+        resultHtml += `<strong>Checkout ID:</strong> ${checkoutId}<br><br>`;
+        
+        if (redirectUrl) {
+            resultHtml += `<strong>Redirect URL:</strong> <a href="${redirectUrl}" target="_blank" onclick="window.open('${redirectUrl}', 'AffirmCheckout', 'width=800,height=600,scrollbars=yes,resizable=yes'); return false;" style="color: var(--accent-color); text-decoration: underline; word-break: break-all;">${redirectUrl}</a> `;
+            resultHtml += `<button onclick="window.open('${redirectUrl}', 'AffirmCheckout', 'width=800,height=600,scrollbars=yes,resizable=yes')" style="margin-left: 10px; padding: 4px 12px; background: var(--accent-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em;">Open in Popup</button><br><br>`;
+        }
+        
+        resultHtml += `<pre style="background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;">${formatJSON(response.data)}</pre><br>`;
+        resultHtml += `✅ Checkout ID has been auto-populated in the Transaction Authorization section<br><br>`;
+        resultHtml += `<strong>Next steps:</strong><br>`;
+        resultHtml += `1. Go to "Transaction Authorization" section<br>`;
+        resultHtml += `2. Click "AUTHORIZE TRANSACTION" (checkout_id is already filled)<br>`;
+        resultHtml += `3. After authorization, use the returned transaction_id for capture/void/refund operations`;
+        
+        // Use innerHTML instead of textContent for HTML rendering
+        const resultDiv = document.getElementById('checkout-init-result');
+        if (resultDiv) {
+            resultDiv.innerHTML = resultHtml;
+            resultDiv.className = 'test-result show success';
+            resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
     } else {
         displayResult('checkout-init-result', 
             `Error: ${response.error}\n\nDebug Info:\n- Endpoint used: /checkout/direct\n- Check browser console for detailed request info`,
