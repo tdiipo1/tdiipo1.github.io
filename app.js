@@ -46,6 +46,8 @@ function initializeDarkMode() {
     const toggleBtn = document.getElementById('dark-mode-toggle');
     if (toggleBtn) {
         toggleBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+        // Add event listener instead of using onclick attribute
+        toggleBtn.addEventListener('click', toggleDarkMode);
     }
 }
 
