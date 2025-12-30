@@ -46,8 +46,6 @@ function initializeDarkMode() {
     const toggleBtn = document.getElementById('dark-mode-toggle');
     if (toggleBtn) {
         toggleBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
-        // Add event listener instead of using onclick attribute
-        toggleBtn.addEventListener('click', toggleDarkMode);
     }
 }
 
@@ -478,7 +476,7 @@ async function testCheckoutInit() {
     // Build merchant object with optional fields
     const merchantObj = {
         public_api_key: publicKey,  // Required: public API key must be in request body
-        user_confirmation_url: 'https://tdiipo1.github.io/confirm',
+        user_confirmation_url: 'https://tdiipo1.github.io/confirm.html',
         user_cancel_url: 'https://tdiipo1.github.io/cancel'
     };
     
@@ -1509,7 +1507,7 @@ function updateAPIRequestBody() {
         bodyTemplate = {
             merchant: {
                 public_api_key: publicKey,
-                user_confirmation_url: 'https://tdiipo1.github.io/confirm',
+                user_confirmation_url: 'https://tdiipo1.github.io/confirm.html',
                 user_cancel_url: 'https://tdiipo1.github.io/cancel'
             },
             items: [{
