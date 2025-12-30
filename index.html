@@ -15,8 +15,13 @@
     <body>
         <header class="main-header">
         <div class="container">
-            <h1>Affirm Integration Testing Suite</h1>
-            <p class="subtitle">Partner Engineering Testing Tools & Scenarios</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <div style="flex: 1;">
+                    <h1>Affirm Integration Testing Suite</h1>
+                    <p class="subtitle">Partner Engineering Testing Tools & Scenarios</p>
+                </div>
+                <button id="dark-mode-toggle" onclick="toggleDarkMode()" style="padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; cursor: pointer; font-size: 1.2rem; transition: all 0.2s;" title="Toggle Dark Mode">🌙</button>
+            </div>
             <div id="api-mode-banner" class="api-mode-banner">
                 <span id="api-mode-text">🔒 Mock Mode: Using simulated API responses (safe, no credentials needed)</span>
             </div>

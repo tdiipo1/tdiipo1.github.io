@@ -15,6 +15,24 @@
     --shadow-lg: 0 4px 6px rgba(0,0,0,0.1);
 }
 
+/* Dark mode variables */
+[data-theme="dark"] {
+    --primary-color: #ffffff;
+    --secondary-color: #e0e0e0;
+    --accent-color: #4da6ff;
+    --accent-hover: #3399ff;
+    --success-color: #48d597;
+    --danger-color: #ff6b6b;
+    --warning-color: #ffd93d;
+    --bg-color: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --border-color: #404040;
+    --shadow: 0 2px 4px rgba(0,0,0,0.3);
+    --shadow-lg: 0 4px 6px rgba(0,0,0,0.4);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -26,6 +44,7 @@ body {
     line-height: 1.6;
     color: var(--text-primary);
     background-color: var(--bg-secondary);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -298,6 +317,10 @@ main {
     word-wrap: break-word;
     max-height: 400px;
     overflow-y: auto;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .test-result.show {
@@ -310,10 +333,22 @@ main {
     color: #155724;
 }
 
+[data-theme="dark"] .test-result.success {
+    background-color: rgba(72, 213, 151, 0.15);
+    border-color: var(--success-color);
+    color: var(--success-color);
+}
+
 .test-result.error {
     background-color: #f8d7da;
     border: 1px solid #f5c6cb;
     color: #721c24;
+}
+
+[data-theme="dark"] .test-result.error {
+    background-color: rgba(255, 107, 107, 0.15);
+    border-color: var(--danger-color);
+    color: var(--danger-color);
 }
 
 .test-result.info {
@@ -322,10 +357,22 @@ main {
     color: #0c5460;
 }
 
+[data-theme="dark"] .test-result.info {
+    background-color: rgba(77, 166, 255, 0.15);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
 .test-result.warning {
     background-color: #fff3cd;
     border: 1px solid #ffeaa7;
     color: #856404;
+}
+
+[data-theme="dark"] .test-result.warning {
+    background-color: rgba(255, 217, 61, 0.15);
+    border-color: var(--warning-color);
+    color: var(--warning-color);
 }
 
 /* Resource Cards */
@@ -520,5 +567,12 @@ main {
     background: var(--accent-hover);
     transform: translateY(-1px);
     box-shadow: var(--shadow);
+}
+
+/* Dark mode styles for pre tags in results */
+[data-theme="dark"] .test-result pre {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
 }
 

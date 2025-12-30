@@ -20,8 +20,38 @@ const CONFIG = {
     corsProxy: ''
 };
 
+// Dark mode toggle function
+function toggleDarkMode() {
+    const html = document.documentElement;
+    const currentTheme = html.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    // Update toggle button icon
+    const toggleBtn = document.getElementById('dark-mode-toggle');
+    if (toggleBtn) {
+        toggleBtn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+    }
+}
+
+// Initialize dark mode from localStorage
+function initializeDarkMode() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    const html = document.documentElement;
+    html.setAttribute('data-theme', savedTheme);
+    
+    // Update toggle button icon
+    const toggleBtn = document.getElementById('dark-mode-toggle');
+    if (toggleBtn) {
+        toggleBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+    }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
+    initializeDarkMode();
     initializeSecureKeyManager();
     setupSmoothScrolling();
     setupScrollToTop();
@@ -76,6 +106,48 @@ function displayResult(elementId, message, type = 'info') {
 // Utility: Format JSON for display
 function formatJSON(obj) {
     return JSON.stringify(obj, null, 2);
+}
+
+// Utility: Copy text to clipboard
+function copyToClipboard(text, buttonId) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Show feedback
+        const button = document.getElementById(buttonId);
+        if (button) {
+            const originalText = button.textContent;
+            button.textContent = '✓ Copied!';
+            button.style.background = '#28a745';
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.background = '#6c757d';
+            }, 2000);
+        }
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            const button = document.getElementById(buttonId);
+            if (button) {
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.style.background = '#28a745';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#6c757d';
+                }, 2000);
+            }
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+        }
+        document.body.removeChild(textArea);
+    });
 }
 
 // Utility: Generate idempotency key (must be <= 36 characters per Affirm API)
@@ -561,12 +633,19 @@ async function testCheckoutInit() {
         
         // Create HTML with clickable redirect URL that opens in popup
         let resultHtml = `Checkout initialized successfully!<br><br>`;
-        resultHtml += `<strong>Order ID:</strong> ${orderId}<br>`;
-        resultHtml += `<strong>Checkout ID:</strong> ${checkoutId}<br><br>`;
+        resultHtml += `<strong>Order ID:</strong> <span id="order-id-display">${orderId}</span> `;
+        resultHtml += `<button onclick="copyToClipboard('${orderId}', 'order-id-copy-btn')" id="order-id-copy-btn" style="padding: 4px 8px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em; margin-left: 5px;" title="Copy Order ID">📋 Copy</button><br>`;
+        resultHtml += `<strong>Checkout ID:</strong> <span id="checkout-id-display">${checkoutId}</span> `;
+        resultHtml += `<button onclick="copyToClipboard('${checkoutId}', 'checkout-id-copy-btn')" id="checkout-id-copy-btn" style="padding: 4px 8px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em; margin-left: 5px;" title="Copy Checkout ID">📋 Copy</button><br><br>`;
         
         if (redirectUrl) {
             resultHtml += `<strong>Redirect URL:</strong> <a href="${redirectUrl}" target="_blank" onclick="window.open('${redirectUrl}', 'AffirmCheckout', 'width=800,height=600,scrollbars=yes,resizable=yes'); return false;" style="color: var(--accent-color); text-decoration: underline; word-break: break-all;">${redirectUrl}</a> `;
             resultHtml += `<button onclick="window.open('${redirectUrl}', 'AffirmCheckout', 'width=800,height=600,scrollbars=yes,resizable=yes')" style="margin-left: 10px; padding: 4px 12px; background: var(--accent-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em;">Open in Popup</button><br><br>`;
+            
+            // Auto-open popup window
+            setTimeout(() => {
+                window.open(redirectUrl, 'AffirmCheckout', 'width=800,height=600,scrollbars=yes,resizable=yes');
+            }, 500); // Small delay to ensure page is ready
         }
         
         resultHtml += `<pre style="background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;">${formatJSON(response.data)}</pre><br>`;
