@@ -49,29 +49,54 @@ function initializeDarkMode() {
     }
 }
 
-// Initialize last updated timestamp
-function initializeLastUpdated() {
-    // You can set a specific last update date here, or it will use the current date/time
-    // Format: 'YYYY-MM-DDTHH:MM:SS-TZ:TZ' (e.g., '2024-12-19T10:30:00-08:00')
-    // Leave as null to use current date/time
-    const lastUpdateDateString = null; // Set to a specific date string or null for current time
-    
+// Initialize last updated timestamp from GitHub API
+async function initializeLastUpdated() {
     const timestampElement = document.getElementById('last-updated-timestamp');
-    if (timestampElement) {
-        const lastUpdatedDate = lastUpdateDateString ? new Date(lastUpdateDateString) : new Date();
+    if (!timestampElement) return;
+    
+    try {
+        // Fetch the last commit date from GitHub API
+        const response = await fetch('https://api.github.com/repos/tdiipo1/tdiipo1.github.io/commits?per_page=1', {
+            headers: {
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
         
-        // Format: "December 19, 2024 at 10:30 AM PST"
-        const options = {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            timeZoneName: 'short'
-        };
-        const formattedDate = lastUpdatedDate.toLocaleString('en-US', options);
-        timestampElement.textContent = formattedDate;
+        if (response.ok) {
+            const commits = await response.json();
+            if (commits && commits.length > 0 && commits[0].commit && commits[0].commit.author) {
+                const lastCommitDate = new Date(commits[0].commit.author.date);
+                
+                // Format: "December 19, 2024 at 10:30 AM PST"
+                const options = {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    timeZoneName: 'short'
+                };
+                const formattedDate = lastCommitDate.toLocaleString('en-US', options);
+                timestampElement.textContent = formattedDate;
+                return;
+            }
+        }
+    } catch (error) {
+        console.warn('Failed to fetch last commit date from GitHub API:', error);
     }
+    
+    // Fallback: Use a manually set date or show "Unknown"
+    // Update this date when you make significant changes
+    const fallbackDate = new Date('2024-12-30T08:00:00-08:00');
+    const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'short'
+    };
+    timestampElement.textContent = fallbackDate.toLocaleString('en-US', options) + ' (cached)';
 }
 
 // Initialize
