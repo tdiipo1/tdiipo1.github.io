@@ -288,6 +288,121 @@
                             </div>
                         </details>
                         
+                        <!-- Show All Fields Toggle -->
+                        <div style="margin: 1.5rem 0;">
+                            <label style="display: flex; align-items: center; cursor: pointer; font-weight: 600; padding: 0.75rem; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px;">
+                                <input type="checkbox" id="show-all-fields-toggle" onchange="toggleAllFields()" style="margin-right: 0.5rem; width: auto;">
+                                <span>Show All Fields (Advanced Options)</span>
+                            </label>
+                            
+                            <div id="all-fields-section" style="display: none; margin-top: 1rem; padding: 1rem; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px;">
+                                <h4 style="margin-bottom: 1rem; color: var(--accent-color);">Additional Checkout Fields</h4>
+                                
+                                <!-- Merchant Additional Fields -->
+                                <details style="margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem; background: white;">
+                                    <summary style="cursor: pointer; font-weight: 600; padding: 0.5rem;">Merchant Additional Fields</summary>
+                                    <div style="padding: 0.5rem; margin-top: 0.5rem;">
+                                        <label>Merchant Name: <input type="text" id="merchant-name-field" placeholder="Customer-facing merchant name"></label>
+                                        <label>User Confirmation URL Action: 
+                                            <select id="merchant-confirmation-action">
+                                                <option value="">Default (GET)</option>
+                                                <option value="GET">GET</option>
+                                                <option value="POST">POST</option>
+                                            </select>
+                                        </label>
+                                        <label>Use VCN: 
+                                            <select id="merchant-use-vcn">
+                                                <option value="false">false</option>
+                                                <option value="true">true</option>
+                                            </select>
+                                        </label>
+                                    </div>
+                                </details>
+                                
+                                <!-- Shipping Contact Info -->
+                                <details style="margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem; background: white;">
+                                    <summary style="cursor: pointer; font-weight: 600; padding: 0.5rem;">Shipping Contact Information</summary>
+                                    <div style="padding: 0.5rem; margin-top: 0.5rem;">
+                                        <label>Phone Number: <input type="tel" id="shipping-phone" placeholder="e.g., 1235555555"></label>
+                                        <label>Email: <input type="email" id="shipping-email" placeholder="e.g., [email protected]"></label>
+                                    </div>
+                                </details>
+                                
+                                <!-- Billing Contact Info -->
+                                <details style="margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem; background: white;">
+                                    <summary style="cursor: pointer; font-weight: 600; padding: 0.5rem;">Billing Contact Information</summary>
+                                    <div style="padding: 0.5rem; margin-top: 0.5rem;">
+                                        <label>Phone Number: <input type="tel" id="billing-phone" placeholder="e.g., 1235555555"></label>
+                                        <label>Email: <input type="email" id="billing-email" placeholder="e.g., [email protected]"></label>
+                                    </div>
+                                </details>
+                                
+                                <!-- Currency and Amounts -->
+                                <details style="margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem; background: white;">
+                                    <summary style="cursor: pointer; font-weight: 600; padding: 0.5rem;">Currency and Additional Amounts</summary>
+                                    <div style="padding: 0.5rem; margin-top: 0.5rem;">
+                                        <label>Currency (Required): 
+                                            <select id="checkout-currency" required>
+                                                <option value="USD" selected>USD</option>
+                                                <option value="CAD">CAD</option>
+                                                <option value="GBP">GBP</option>
+                                            </select>
+                                        </label>
+                                        <label>Shipping Amount: $<input type="number" id="checkout-shipping-amount" value="0" min="0" step="0.01" placeholder="Leave 0 if not applicable"></label>
+                                    </div>
+                                </details>
+                                
+                                <!-- Financing Program -->
+                                <details style="margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem; background: white;">
+                                    <summary style="cursor: pointer; font-weight: 600; padding: 0.5rem;">Financing Program</summary>
+                                    <div style="padding: 0.5rem; margin-top: 0.5rem;">
+                                        <label>Financing Program ID: <input type="text" id="financing-program" placeholder="e.g., fp_3z6r12r"></label>
+                                    </div>
+                                </details>
+                                
+                                <!-- Expiration Settings -->
+                                <details style="margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem; background: white;">
+                                    <summary style="cursor: pointer; font-weight: 600; padding: 0.5rem;">Expiration Settings</summary>
+                                    <div style="padding: 0.5rem; margin-top: 0.5rem;">
+                                        <label>Checkout Expiration (ISO timestamp, no milliseconds): <input type="datetime-local" id="checkout-expiration"></label>
+                                        <label>Expiration Time (TTL deadline, ISO timestamp): <input type="datetime-local" id="expiration-time"></label>
+                                    </div>
+                                </details>
+                                
+                                <!-- Store (In-Store Transactions) -->
+                                <details style="margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem; background: white;">
+                                    <summary style="cursor: pointer; font-weight: 600; padding: 0.5rem;">Store Information (In-Store Transactions)</summary>
+                                    <div style="padding: 0.5rem; margin-top: 0.5rem;">
+                                        <label>Store Name: <input type="text" id="store-name" placeholder="Store name"></label>
+                                        <label>Store Address Line 1: <input type="text" id="store-line1" placeholder="Store address"></label>
+                                        <label>Store Address Line 2: <input type="text" id="store-line2" placeholder="Suite, unit, etc."></label>
+                                        <label>Store City: <input type="text" id="store-city" placeholder="City"></label>
+                                        <label>Store State: <input type="text" id="store-state" placeholder="State"></label>
+                                        <label>Store Zipcode: <input type="text" id="store-zipcode" placeholder="Zipcode"></label>
+                                        <label>Store Country: <input type="text" id="store-country" placeholder="Country"></label>
+                                    </div>
+                                </details>
+                                
+                                <!-- Discounts -->
+                                <details style="margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem; background: white;">
+                                    <summary style="cursor: pointer; font-weight: 600; padding: 0.5rem;">Discounts (JSON Format)</summary>
+                                    <div style="padding: 0.5rem; margin-top: 0.5rem;">
+                                        <label>Discounts JSON: <textarea id="checkout-discounts" rows="6" placeholder='{"RETURN5": {"discount_amount": 500, "discount_display_name": "Returning customer 5% discount"}, "PRESDAY10": {"discount_amount": 1000, "discount_display_name": "President'\''s Day 10% off"}}' style="width: 100%; font-family: monospace; font-size: 0.9em;"></textarea></label>
+                                        <small style="color: #666;">Enter discounts as JSON object. Each discount must have a discount code as the key.</small>
+                                    </div>
+                                </details>
+                                
+                                <!-- Metadata -->
+                                <details style="margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem; background: white;">
+                                    <summary style="cursor: pointer; font-weight: 600; padding: 0.5rem;">Metadata (JSON Format)</summary>
+                                    <div style="padding: 0.5rem; margin-top: 0.5rem;">
+                                        <label>Metadata JSON: <textarea id="checkout-metadata" rows="4" placeholder='{"shipping_type": "UPS Ground", "mode": "modal"}' style="width: 100%; font-family: monospace; font-size: 0.9em;"></textarea></label>
+                                        <small style="color: #666;">Enter custom metadata as JSON object.</small>
+                                    </div>
+                                </details>
+                            </div>
+                        </div>
+                        
                         <button class="btn btn-primary" onclick="testCheckoutInit()">Initialize Checkout</button>
                     </div>
                     <div id="checkout-init-result" class="test-result"></div>
